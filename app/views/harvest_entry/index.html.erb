@@ -1,0 +1,17 @@
+<h2>HarvestEntryController#index</h2>
+<%= link_to "Harvest User", harvest_user_path %>
+
+<% @harvest_entry.each do |entry| %>
+  <ul>
+    <li><%= "harvest_id: #{entry.harvest_id}" %></li>
+    <li><%= "spent_at: #{entry.spent_at}" %></li>
+    <li><%= "user_id: #{entry.user_id}" %></li>
+    <li><%= "client: #{entry.client}" %></li>
+    <li><%= "project_id: #{entry.project_id}" %></li>
+    <li><%= "task_id: #{entry.task_id}" %></li>
+    <li><%= "task: #{entry.task}" %></li>
+    <li><%= "hours: #{entry.hours}" %></li>
+    <li><%= "hours_without_timer: #{entry.hours_without_timer}" %></li>
+    <li><%= "notes: #{entry.notes}" %></li>
+  </ul>
+<% end %>

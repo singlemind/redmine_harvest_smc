@@ -1,0 +1,11 @@
+<h2>HarvestEntryController#user</h2>
+
+<%= form_for :harvest_user, :url =>{:action=>"harvest_user"} do | f | -%>
+  <%# error_messages_for :harvest_user %>
+  
+  <%= field_set_tag "Harvest User" do -%>      
+      Harvest Email: <%= f.text_field :decrypt_username, :label => "Harvest email address" %>
+      Harvest Password: <%= f.password_field :decrypt_password, :label => "Harvest Password" %>
+  <% end -%>
+  <%= f.submit %>
+<% end -%>

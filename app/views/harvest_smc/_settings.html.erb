@@ -1,0 +1,18 @@
+<% content_for :header_tags do %>
+  <%# stylesheet_link_tag 'harvest_smc', :plugin => 'redmine_harvest_smc' %>
+  <%= javascript_include_tag 'https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js' %>
+  <script type="text/javascript">
+    //since redMine is a notorious user of prototype.js...
+    jQuery.noConflict();
+  </script>
+    
+<% end %>
+
+<%  
+  projects=Project.find(:all, :conditions => { :parent_id => nil })
+  allProjects = Project.find(:all)
+  #a simple array to hold all the sub project ids that the user defined
+  @settings[:harvest_smc_projects] = Array.new
+
+%>
+

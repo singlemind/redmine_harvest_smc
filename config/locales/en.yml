@@ -1,0 +1,7 @@
+# English strings go here for Rails i18n
+en:
+  notice_save_user: "Your Harvest user credentials have been saved."
+  notice_save_user_error: "There was a problem saving your Harvest user credentials."
+  notice_save_user_cancel: "You did not setup a Harvest user, no big deal."
+  harvest_api_error: "There was an error connecting to the Harvest API"
+  no_user_set: "Please set your Harvest username and password first."
