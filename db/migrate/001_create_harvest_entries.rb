@@ -12,11 +12,14 @@ class CreateHarvestEntries < ActiveRecord::Migration
       t.float :hours
       t.float :hours_without_timer
       t.string :notes
+      t.string :status
       t.datetime :created_at
       t.datetime :updated_at
       t.time :started_at
       t.time :ended_at
     end
-    add_index :harvest_entries, :harvest_id
+    add_index :harvest_entries 
+    add_index :harvest_id 
+    add_index :status
   end
 end

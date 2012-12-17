@@ -6,6 +6,7 @@ class CreateHarvestSyncs < ActiveRecord::Migration
       t.datetime :created_at
       t.datetime :updated_at
       t.string :status
+      t.string :matched_entries
       t.string :unmatched_entries
     end
     add_index :harvest_syncs, :day_of_the_year

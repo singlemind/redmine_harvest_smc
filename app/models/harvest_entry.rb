@@ -10,12 +10,13 @@ class HarvestEntry < ActiveRecord::Base
   	force_reload = false
   	force_sync = false
   	force_timer = false
+  	new_status = "new"
   	self.errors = ""
 
     harvest_user = HarvestUser.find_by_redmine_user_id(User.current.id)
     if (harvest_user.nil?)
       #flash[:error] = "#{l(:no_user_set)}"
-      self.errors << = "#{l(:no_user_set)} "
+      self.errors << l(:no_user_set)
       return 
     end
     harvest = HarvestClient.new(harvest_user.decrypt_username,harvest_user.decrypt_password)
@@ -35,6 +36,7 @@ class HarvestEntry < ActiveRecord::Base
       harvest_sync.day_of_the_year = day_of_the_year
       harvest_sync.year = Time.now.year
       harvest_sync.status = "new"
+      #TODO: map/collect a list of entry ids and save to new field.
       harvest_sync.save!
       
       xml_doc.xpath("//day_entry").each do |entry|
@@ -73,7 +75,7 @@ class HarvestEntry < ActiveRecord::Base
         harvest_entry.task_id = entry.xpath("task_id").text
         harvest_entry.task = entry.xpath("task").text
         harvest_entry.notes = entry.xpath("notes").text
-        
+        harvest_entry.status = new_status
         #hours_match = true if (prev_entry.hours == harvest_entry.hours)
         harvest_entry.save! unless prev_entry
         
@@ -94,10 +96,37 @@ class HarvestEntry < ActiveRecord::Base
     rescue Exception => e
     	#TODO: implement error attr_accessor
       #flash[:error] = "#{l(:harvest_api_error)}: #{e}"
-      self.errors << = "#{l(:harvest_api_error)}: #{e} "
+      self.errors << "#{l(:harvest_api_error)}: #{e} "
     end 
     
   end #fetch_entries
+
+  def set_time_for_each_entry
+  	#conditions status = new
+  	harvest_entries = HarvestEntry.find(:all)
+
+  	harvest_entries.each do |entry|
+  		redmine_issue_id = entry.notes.match /[[:digit:]]{4}/
+  		next unless redmine_issue_id
+
+  		issue = Issue.find(redmine_issue_id)
+  		time = TimeEntry.new(:issue_id => issue,
+                           :spent_on => entry.spent_on,
+                           :activity => entry.task,
+                           :hours => entry.hours)
+      # Truncate comments to 255 charz
+      time.comments = entry.notes.mb_chars[0..255].strip.to_s
+      #time.user = User.find(HarvestUser.redmine_user_id)
+      time.user = User.current
+
+      time.save!
+
+      enty.status = "synced"
+      entry.save!
+      
+  	end
+
+  end
 
   def set_updated_at
     self.updated_at = Time.now

@@ -5,6 +5,7 @@
     <thead>
         <tr>
             <td>&nbsp;</td>
+            <td>status</td>
             <td>harvest_id</td>
             <td>spent_at</td>
             <td>user_id</td>
@@ -13,12 +14,13 @@
             <td>task_id</td>
             <td>task</td>
             <td>hours</td>
-            <td>hours_without_timer</td>
+            <td>no_timer</td>
             <td>notes</td>
     </thead>
-    <% @harvest_entry.each do |entry| %>
+    <% @harvest_entries.each do |entry| %>
       <tr>
-        <td><a href="https://singlemind.harvestapp.com/time/day/#{entry.harvest_url}" title="link to harvest" class="entry_link_to_harvest">⃔</a></td>
+        <td><a href="https://singlemind.harvestapp.com/time/day/<%= Date.strptime(entry.spent_at, '%Y-%m-%d').strftime('%Y/%m/%d') %>" title="link to harvest" class="entry_link_to_harvest">⃔</a></td>
+        <td><%= entry.status %></td>
         <td><%= entry.harvest_id %></td>
         <td><%= entry.spent_at %></td>
         <td><%= entry.user_id %></td>

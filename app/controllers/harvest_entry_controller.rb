@@ -7,7 +7,7 @@ class HarvestEntryController < ApplicationController
   def index
     #fetch_entries
     #, :conditions => { :created_at => Time.now }
-    @harvest_entry = HarvestEntry.find(:all)
+    @harvest_entries = HarvestEntry.find(:all)
   end
 
   def harvest_user

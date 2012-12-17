@@ -8,6 +8,7 @@ class CreateHarvestUsers < ActiveRecord::Migration
       t.binary :harvest_username_crypt
       t.binary :harvest_password_crypt
     end
-    add_index :harvest_users, :redmine_user_id
+    add_index :harvest_users
+    add_index :redmine_user_id
   end
 end
