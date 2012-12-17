@@ -18,8 +18,7 @@ class CreateHarvestEntries < ActiveRecord::Migration
       t.time :started_at
       t.time :ended_at
     end
-    add_index :harvest_entries 
-    add_index :harvest_id 
-    add_index :status
+    add_index :harvest_entries, :harvest_id 
+    add_index :harvest_entries, :status
   end
 end
