@@ -1,19 +1,34 @@
-<h2>HarvestEntryController#index</h2>
+<h2>Harvest Entries</h2>
 <%= link_to "Harvest User", harvest_user_path %>
 
-<% @harvest_entry.each do |entry| %>
-  <ul>
-    <li><%= "harvest_id: #{entry.harvest_id}" %></li>
-    <li><%= "spent_at: #{entry.spent_at}" %></li>
-    <li><%= "user_id: #{entry.user_id}" %></li>
-    <li><%= "client: #{entry.client}" %></li>
-    <li><%= "project_id: #{entry.project_id}" %></li>
-    <li><%= "task_id: #{entry.task_id}" %></li>
-    <li><%= "task: #{entry.task}" %></li>
-    <li><%= "hours: #{entry.hours}" %></li>
-    <li><%= "hours_without_timer: #{entry.hours_without_timer}" %></li>
-    <li><%= "notes: #{entry.notes}" %></li>
-
-    <li><a href="https://singlemind.harvestapp.com/time/day/#{entry.harvest_url}" title="link to harvest">LINK TO HARVEST</a></li>
-  </ul>
-<% end %>
+<table>
+    <thead>
+        <tr>
+            <td>&nbsp;</td>
+            <td>harvest_id</td>
+            <td>spent_at</td>
+            <td>user_id</td>
+            <td>client</td>
+            <td>project_id</td>
+            <td>task_id</td>
+            <td>task</td>
+            <td>hours</td>
+            <td>hours_without_timer</td>
+            <td>notes</td>
+    </thead>
+    <% @harvest_entry.each do |entry| %>
+      <tr>
+        <td><a href="https://singlemind.harvestapp.com/time/day/#{entry.harvest_url}" title="link to harvest" class="entry_link_to_harvest">⃔</a></td>
+        <td><%= entry.harvest_id %></td>
+        <td><%= entry.spent_at %></td>
+        <td><%= entry.user_id %></td>
+        <td><%= entry.client %></td>
+        <td><%= entry.project_id %></td>
+        <td><%= entry.task_id %></td>
+        <td><%= entry.task %></td>
+        <td><%= entry.hours %></td>
+        <td><%= entry.hours_without_timer %></td>
+        <td><%= entry.notes %></td>    
+      </tr>
+    <% end %>
+</table>
