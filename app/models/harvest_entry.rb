@@ -123,7 +123,7 @@ class HarvestEntry < ActiveRecord::Base
                           :project  => project,
                           :user     => user,
                           :activity => activity,
-                          :comments = entry.notes.mb_chars[0..255].strip.to_s) # Truncate comments to 255 charz
+                          :comments => entry.notes.mb_chars[0..255].strip.to_s) # Truncate comments to 255 charz
       
       te.save!
       entry.status = "synced"
