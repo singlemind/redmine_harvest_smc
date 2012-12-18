@@ -1,22 +1,24 @@
 class HarvestEntry < ActiveRecord::Base
   unloadable
   
-  attr_accessor :errors
+  attr_accessor :error_string
 
   before_save :set_updated_at
   before_create :set_created_at
   
-  def fetch_entries(day_of_the_year = Time.now.yday, year = Time.now.year)
+  def self.fetch_entries(user, day_of_the_year = Time.now.yday, year = Time.now.year)
   	force_reload = false
-  	force_sync = false
+  	force_sync = true 
   	force_timer = false
   	new_status = "new"
-  	self.errors = ""
+  	error_string = ""
 
-    harvest_user = HarvestUser.find_by_redmine_user_id(User.current.id)
+    harvest_user = HarvestUser.find_by_redmine_user_id(user)
     if (harvest_user.nil?)
       #flash[:error] = "#{l(:no_user_set)}"
-      self.errors << l(:no_user_set)
+      #error_string << l(:no_user_set)
+      logger.error "NO USER SET"
+      error_string << "NO USER SET"
       return 
     end
     harvest = HarvestClient.new(harvest_user.decrypt_username,harvest_user.decrypt_password)
@@ -80,8 +82,8 @@ class HarvestEntry < ActiveRecord::Base
         harvest_entry.save! unless prev_entry
         
         #use .inspect here...
-        #logger.info  "id: #{entry.xpath("id").text} | "
-        #logger.info  "hours: #{entry.xpath("hours").text} | "
+        logger.info  "id: #{entry.xpath("id").text} | "
+        logger.info  "hours: #{entry.xpath("hours").text} | "
         #logger.info  "hours_without_timer: #{entry.xpath("hours_without_timer").text} | "
         #logger.info  "spent_at: #{entry.xpath("spent_at").text} | "
         #logger.info  "user_id: #{entry.xpath("user_id").text} | "
@@ -90,15 +92,15 @@ class HarvestEntry < ActiveRecord::Base
         #logger.info  "project: #{entry.xpath("project").text} | "
         #logger.info  "task_id #{entry.xpath("task_id").text} | "
         #logger.info  "task: #{entry.xpath("task").text} | "
-        #logger.info  "notes: #{entry.xpath("notes").text} | "
+        logger.info  "notes: #{entry.xpath("notes").text} | "
       end #each
       
     rescue Exception => e
     	#TODO: implement error attr_accessor
       #flash[:error] = "#{l(:harvest_api_error)}: #{e}"
-      self.errors << "#{l(:harvest_api_error)}: #{e} "
+      error_string << "#{l(:harvest_api_error)}: #{e} "
     end 
-    
+    return error_string    
   end #fetch_entries
 
   def set_time_for_each_entry

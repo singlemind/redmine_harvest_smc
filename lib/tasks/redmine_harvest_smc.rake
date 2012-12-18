@@ -10,7 +10,8 @@ namespace :redmine_harvest_smc do
       args[:date] = Time.now.yday
     end
 
-    HarvestEntry.fetch_entries args[:date]
+    error_string = HarvestEntry.fetch_entries args[:date]
+    puts "#{error_string}"
 
   end
 
