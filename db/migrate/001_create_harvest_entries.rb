@@ -1,7 +1,9 @@
 class CreateHarvestEntries < ActiveRecord::Migration
   def change
     create_table :harvest_entries do |t|
+      t.integer :redmine_user_id
       t.integer :harvest_id
+      #this should probably be a .datetime
       t.string :spent_at
       t.integer :user_id
       t.string :client

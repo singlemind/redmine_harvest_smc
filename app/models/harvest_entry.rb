@@ -104,26 +104,29 @@ class HarvestEntry < ActiveRecord::Base
   end #fetch_entries
 
   def self.set_time_for_each_entry
-  	#conditions status = new
-  	harvest_entries = HarvestEntry.find(:all, :conditions => { :status => 'new' } )
+  	
+
+    harvest_entries = HarvestEntry.find(:all, :conditions => { :status => 'new' } )
 
   	harvest_entries.each do |entry|
   		redmine_issue_id = entry.notes.match /\d{4}/
   		next unless redmine_issue_id
-
+      #TODO: do not use hard-coded redmine_user_id
+      user = User.find(50)
   		issue = Issue.find(redmine_issue_id.to_s)
-  		time = TimeEntry.new(:issue_id => issue,
-                           :spent_on => entry.spent_on,
-                           :activity => entry.task,
-                           :hours => entry.hours)
-      # Truncate comments to 255 charz
-      time.comments = entry.notes.mb_chars[0..255].strip.to_s
-      #time.user = User.find(HarvestUser.redmine_user_id)
-      time.user = User.current
+      project = issue.project
+      activity = TimeEntryActivity.find_by_name('Development')
 
-      time.save!
-
-      enty.status = "synced"
+      te = TimeEntry.create(:spent_on => Date.strptime(entry.spent_at, '%Y-%m-%d'),
+                          :hours    => entry.hours,
+                          :issue    => issue,
+                          :project  => project,
+                          :user     => user,
+                          :activity => activity,
+                          :comments = entry.notes.mb_chars[0..255].strip.to_s) # Truncate comments to 255 charz
+      
+      te.save!
+      entry.status = "synced"
       entry.save!
       
   	end
