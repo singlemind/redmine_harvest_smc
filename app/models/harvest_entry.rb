@@ -6,14 +6,14 @@ class HarvestEntry < ActiveRecord::Base
   before_save :set_updated_at
   before_create :set_created_at
   
-  def self.fetch_entries(user, day_of_the_year = Time.now.yday, year = Time.now.year)
+  def self.fetch_entries(redmine_user_id, day_of_the_year = Time.now.yday, year = Time.now.year)
   	force_reload = false
   	force_sync = true 
   	force_timer = false
   	new_status = "new"
   	error_string = ""
 
-    harvest_user = HarvestUser.find_by_redmine_user_id(user)
+    harvest_user = HarvestUser.find_by_redmine_user_id(redmine_user_id)
     if (harvest_user.nil?)
       #flash[:error] = "#{l(:no_user_set)}"
       #error_string << l(:no_user_set)
@@ -78,6 +78,7 @@ class HarvestEntry < ActiveRecord::Base
         harvest_entry.task = entry.xpath("task").text
         harvest_entry.notes = entry.xpath("notes").text
         harvest_entry.status = new_status
+        harvest_entry.redmine_user_id = redmine_user_id
         #hours_match = true if (prev_entry.hours == harvest_entry.hours)
         harvest_entry.save! unless prev_entry
         
@@ -112,6 +113,7 @@ class HarvestEntry < ActiveRecord::Base
   		redmine_issue_id = entry.notes.match /\d{4}/
   		next unless redmine_issue_id
       #TODO: do not use hard-coded redmine_user_id
+      #next migration will have access to entry.redmine_user_id
       user = User.find(50)
   		issue = Issue.find(redmine_issue_id.to_s)
       project = issue.project
