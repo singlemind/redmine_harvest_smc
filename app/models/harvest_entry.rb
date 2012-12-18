@@ -108,10 +108,10 @@ class HarvestEntry < ActiveRecord::Base
   	harvest_entries = HarvestEntry.find(:all, :conditions => { :status => 'new' } )
 
   	harvest_entries.each do |entry|
-  		redmine_issue_id = entry.notes.match /[[:digit:]]{4}/
+  		redmine_issue_id = entry.notes.match /\d{4}/
   		next unless redmine_issue_id
 
-  		issue = Issue.find(redmine_issue_id)
+  		issue = Issue.find(redmine_issue_id.to_s)
   		time = TimeEntry.new(:issue_id => issue,
                            :spent_on => entry.spent_on,
                            :activity => entry.task,
