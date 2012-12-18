@@ -103,9 +103,9 @@ class HarvestEntry < ActiveRecord::Base
     return error_string    
   end #fetch_entries
 
-  def set_time_for_each_entry
+  def self.set_time_for_each_entry
   	#conditions status = new
-  	harvest_entries = HarvestEntry.find(:all)
+  	harvest_entries = HarvestEntry.find(:all, :conditions => { :status => 'new' } )
 
   	harvest_entries.each do |entry|
   		redmine_issue_id = entry.notes.match /[[:digit:]]{4}/
