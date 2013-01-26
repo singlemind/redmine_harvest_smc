@@ -10,5 +10,7 @@
 #rails 3.x routes:
 match 'harvest' => 'harvest_entry#index', :as => :harvest
 match 'harvest_user' => 'harvest_entry#harvest_user', :as => :harvest_user
-
+match 'harvest_update' => 'harvest_entry#harvest_update', :as => :harvest_update
+match 'harvest_update/day/:day' => 'harvest_entry#harvest_update_day', :day => /\d/, :via => :get, :as => :harvest_update_day
+match 'harvest_update/week/:week' => 'harvest_entry#harvest_update_week', :via => :get, :as => :harvest_update_week
 
