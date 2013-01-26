@@ -1,36 +1,49 @@
+<% content_for :header_tags do %>
+    <%= stylesheet_link_tag "demo_table_jui.css", :plugin => "redmine_harvest_smc", :media => "screen" %>
+    <%= stylesheet_link_tag "jquery.dataTables.css", :plugin => "redmine_harvest_smc", :media => "screen" %>
+    <%= stylesheet_link_tag "jquery.dataTables_themeroller.css", :plugin => "redmine_harvest_smc", :media => "screen" %>
+    <%= stylesheet_link_tag "demo_page.css", :plugin => "redmine_harvest_smc", :media => "screen" %>
+    <%= stylesheet_link_tag "demo_table.css", :plugin => "redmine_harvest_smc", :media => "screen" %>
+
+    <%= javascript_include_tag "lib/jquery-dataTables.js", :plugin => "redmine_harvest_smc" %>
+    <%= javascript_include_tag "redmine_harvest_smc.js", :plugin => "redmine_harvest_smc" %>
+    
+<% end %>
+
+
 <h2>Harvest Entries</h2>
-<%= link_to "Harvest User", harvest_user_path %> | 
-<%= link_to "Fetch Today", harvest_update_day_path %> | 
-<%= link_to "Fetch This Week", harvest_update_week_path %> 
+<%= link_to "Harvest User", harvest_user_path %> 
+    
+
+
+<p><a id="new" href="">Add new row</a></p>
+<table cellpadding="0" cellspacing="0" border="0" class="display" id="redmine_harvest_smc_table">
     <thead>
         <tr>
             <td>&nbsp;</td>
             <td>status</td>
-            <td>harvest_id</td>
             <td>spent_at</td>
-            <td>user_id</td>
             <td>client</td>
-            <td>project_id</td>
-            <td>task_id</td>
             <td>task</td>
             <td>hours</td>
-            <td>no_timer</td>
             <td>notes</td>
+            <td></td>
+            <td></td>
+        </tr>
     </thead>
-    <% @harvest_entries.each do |entry| %>
-      <tr>
-        <td><a href="https://singlemind.harvestapp.com/time/day/<%= Date.strptime(entry.spent_at, '%Y-%m-%d').strftime('%Y/%m/%d') %>" title="link to harvest" class="entry_link_to_harvest">⃔</a></td>
-        <td><%= entry.status %></td>
-        <td><%= entry.harvest_id %></td>
-        <td><%= entry.spent_at %></td>
-        <td><%= entry.user_id %></td>
-        <td><%= entry.client %></td>
-        <td><%= entry.project_id %></td>
-        <td><%= entry.task_id %></td>
-        <td><%= entry.task %></td>
-        <td><%= entry.hours %></td>
-        <td><%= entry.hours_without_timer %></td>
-        <td><%= entry.notes %></td>    
-      </tr>
-    <% end %>
+    <tbody>
+            <% @harvest_entries.each do |entry| %>
+            <tr class="odd gradeX">
+                <td><a href="https://singlemind.harvestapp.com/time/day/<%= Date.strptime(entry.spent_at, '%Y-%m-%d').strftime('%Y/%m/%d') %>" title="link to harvest" class="entry_link_to_harvest">⃔</a></td>
+                <td><%= entry.status %></td>
+                <td><%= entry.spent_at %></td>
+                <td><%= entry.client %></td>
+                <td><%= entry.task %></td>
+                <td><%= entry.hours %></td>
+                <td><%= entry.notes %></td> 
+                <td><a class="rm_harvest_smc_edit" href=""><%= t :rm_smc_edit %></a></td>
+                <td><a class="rm_harvest_smc_delete" href=""><%= t :rm_smc_delete %></a></td>   
+            </tr>
+            <% end %>
+    </tbody>
 </table>

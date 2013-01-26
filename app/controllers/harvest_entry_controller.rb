@@ -4,9 +4,19 @@ class HarvestEntryController < ApplicationController
   #TODO: this does not really work, need to set map.permissions correctly?
   #before_filter :authorize
   
+  before_filter :make_sure_user_logged_in
+
   def index
     #fetch_entries
     #, :conditions => { :created_at => Time.now }
+    #fetch_entries(redmine_user_id, day_of_the_year = Time.now.yday, year = Time.now.year)
+
+    error_string = HarvestEntry.fetch_entries User.current.id
+    
+    unless error_string.empty?
+      flash[:error] = error_string.to_s 
+    end
+
     @harvest_entries = HarvestEntry.find(:all)
   end
 
@@ -63,5 +73,34 @@ class HarvestEntryController < ApplicationController
       end #params[:harvest_entry]
     end #request.post?
   end #harvest_update
+
+  def harvest_update_day
+      @harvest_user = HarvestUser.find_by_redmine_user_id(User.current.id) 
+      @harvest_entry = HarvestEntry.find(params[:harvest_entry])
+
+      error_string = HarvestEntry.fetch_entries Time.now.yday
+      flash[:notice] = "#{error_string}"
+
+  end
+
+  def harvest_update_week
+    myFlashNotice = ''
+    for i in 0..7 do 
+      myFlashNotice << " day #{i} : "
+      myFlashNotice << HarvestEntry.fetch_entries(Time.now.yday - i)
+    end
+
+    flash[:notice] = "#{myFlashNotice}"
+
+  end
+
   
+  private
+  def make_sure_user_logged_in
+    unless User.current.logged?
+      flash[:error] = l(:rm_smc_please_login)
+      redirect_to signin_path
+    end
+  end
+
 end #class

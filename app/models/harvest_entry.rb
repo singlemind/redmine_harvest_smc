@@ -113,8 +113,8 @@ class HarvestEntry < ActiveRecord::Base
   		redmine_issue_id = entry.notes.match /\d{4}/
   		next unless redmine_issue_id
       #TODO: do not use hard-coded redmine_user_id
-      #next migration will have access to entry.redmine_user_id
-      user = User.find(50)
+      #next migration will have access to entry.redmine_user_entry.redmine_user_id
+      user = User.find(entry.redmine_user_id)
   		issue = Issue.find(redmine_issue_id.to_s)
       project = issue.project
       activity = TimeEntryActivity.find_by_name('Development')
