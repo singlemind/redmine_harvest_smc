@@ -60,7 +60,7 @@ $(document).ready(function() {
 		[ null 
 		,	null 
 		, { sSelector: "#statusFilter", type: "checkbox", values: [ 'new', 'problem', 'unmatched', 'flagged', 'complete', 'locked' ] }
-		, { sType: "date", sSelector: "#rmDateFilter", type: "date-range" }
+		, { sSelector: "#rmDateFilter" }
 		, { sSelector: "#rmUserFilter", type: "select"  } 
 		, { sSelector: "#rmIssueFilter" } 
 		, { sSelector: "#clientFilter", type: "select"  }

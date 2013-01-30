@@ -16,9 +16,9 @@ namespace :redmine_harvest_smc do
   end
 
   desc "Add time entries for each harvest entry."
-  task :set_time_for_each_entry => :environment do 
+  task :set_time_for_all_entries => :environment do 
 
-    HarvestEntry.set_time_for_each_entry
+    HarvestEntry.set_time_for_all_entries
 
   end
 

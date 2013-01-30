@@ -11,23 +11,11 @@ class HarvestEntryController < ApplicationController
     #, :conditions => { :created_at => Time.now }
     #fetch_entries(redmine_user_id, day_of_the_year = Time.now.yday, year = Time.now.year)
     
-    #only fetch entries for today and for this user
-    @did_fetch_new_entries = false
-    if HarvestSync.of(User.current.id).find_by_day_of_the_year(Time.now.yday).nil?
-      flash[:notice] = l :rm_smc_attempting_to_fetch_new_entries
-      @did_fetch_new_entries = true
-      error_string = HarvestEntry.fetch_entries User.current.id
-      begin
-        unless error_string.empty?
-          flash[:error] = error_string.to_s 
-        end
-      rescue 
-        @did_fetch_new_entries = false
-        flash[:error] = l :rm_smc_please_setup_harvest_user
-      end
-    end
+    # courtesy fetch entries for today and for this user
+    courtesy_fetch
 
-    @harvest_entries = HarvestEntry.find(:all)
+    @harvest_entries = HarvestEntry.of(User.current.id).status(params[:status].to_s)
+
   end
 
   def harvest_user
@@ -57,26 +45,6 @@ class HarvestEntryController < ApplicationController
   end #harvest_user
 
   def harvest_fetch
-    #@harvest_user = HarvestUser.find_by_redmine_user_id(User.current.id) 
-    #@harvest_entry = HarvestEntry.find(params[:harvest_entry])
-
-    # if request.post?
-    #   if params[:harvest_entry] 
-    #     #TODO: whitelist paramz and create locked scope...
-    #     @harvest_entry.update_attributes params[:harvest_entry]
-        
-    #     if @harvest_entry.valid?
-    #       @harvest_entry.save
-    #       flash[:notice] = "#{l(:notice_save_entry)}"
-    #       #redirect_to :action => "done"
-    #     else
-    #       flash[:error] = "#{l(:notice_save_entry_error)}"
-    #     end
-    #   else
-    #     flash[:error] = "#{l(:notice_save_entry_cancel)}"
-    #     #redirect_to :action => "done"
-    #   end #params[:harvest_entry]
-    # end #request.post?
 
     respond_to do |format|
       format.html { redirect_to :action => 'index'}
@@ -125,9 +93,16 @@ class HarvestEntryController < ApplicationController
       format.html { redirect_to :action => 'index'}
       #format.json { render :partial => 'foobar', :layout => false}
     end
+  end #harvest_fetch_week
 
-  end
+  def sync_status
 
+    if params[:entries]
+      HarvestEntry.of(User.current.id).update_rm_id_and_status_for_each_entry(params[:entries], params[:status], User.current.id)
+    elsif params[:status]
+      HarvestEntry.of(User.current.id).update_rm_id_and_status_for_each_entry([], params[:status], User.current.id)
+    end
+  end #sync_status
   
   private
   def make_sure_user_logged_in_and_has_harvest_user_setup
@@ -160,6 +135,23 @@ class HarvestEntryController < ApplicationController
     rescue 
       @did_fetch_new_entries = false
       flash[:error] = l :rm_smc_please_setup_harvest_user
+    end
+  end
+
+  def courtesy_fetch
+    @did_fetch_new_entries = false
+    if HarvestSync.of(User.current.id).find_by_day_of_the_year(Time.now.yday).nil?
+      flash[:notice] = l :rm_smc_attempting_to_fetch_new_entries
+      @did_fetch_new_entries = true
+      error_string = HarvestEntry.fetch_entries User.current.id
+      begin
+        unless error_string.empty?
+          flash[:error] = error_string.to_s 
+        end
+      rescue 
+        @did_fetch_new_entries = false
+        flash[:error] = l :rm_smc_please_setup_harvest_user
+      end
     end
   end
 
