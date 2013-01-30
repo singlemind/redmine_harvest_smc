@@ -9,8 +9,10 @@
 
 #rails 3.x routes:
 match 'harvest' => 'harvest_entry#index', :as => :harvest
+match 'harvest/:status' => 'harvest_entry#index', :as => :harvest_status 
 match 'harvest_user' => 'harvest_entry#harvest_user', :as => :harvest_user
-match 'harvest_update' => 'harvest_entry#harvest_update', :as => :harvest_update
-match 'harvest_update/day/:day' => 'harvest_entry#harvest_update_day', :day => /\d/, :via => :get, :as => :harvest_update_day
-match 'harvest_update/week/:week' => 'harvest_entry#harvest_update_week', :via => :get, :as => :harvest_update_week
+match 'harvest_fetch' => 'harvest_entry#harvest_fetch', :as => :harvest_fetch
+match 'harvest_fetch/day/today' => 'harvest_entry#harvest_fetch_day', :day => 'today', :via => :get, :as => :harvest_fetch_today
+match 'harvest_fetch/day/:day' => 'harvest_entry#harvest_fetch_day', :day => /\d/, :via => :get, :as => :harvest_fetch_day
+match 'harvest_fetch/week/:week' => 'harvest_entry#harvest_fetch_week', :week => 'current', :via => :get, :as => :harvest_fetch_week
 

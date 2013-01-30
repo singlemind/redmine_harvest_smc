@@ -2,6 +2,8 @@ class CreateHarvestEntries < ActiveRecord::Migration
   def change
     create_table :harvest_entries do |t|
       t.integer :redmine_user_id
+      t.string :redmine_name
+      t.integer :redmine_issue_id
       t.integer :harvest_id
       #this should probably be a .datetime
       t.string :spent_at
@@ -22,5 +24,8 @@ class CreateHarvestEntries < ActiveRecord::Migration
     end
     add_index :harvest_entries, :harvest_id 
     add_index :harvest_entries, :status
+    add_index :harvest_entries, :redmine_user_id
+    add_index :harvest_entries, :redmine_issue_id
+
   end
 end

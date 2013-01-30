@@ -16,7 +16,7 @@ Redmine::Plugin.register :redmine_harvest_smc do
   settings :default => {
     :foo => false
   }, :partial => 'harvest_smc/settings'
-  
+
   Redmine::AccessControl.map do |map|
     map.project_module :redmine_harvest_smc do |map|
       #map.permission :harvest, {:harvest_entry => [:index, :fetch_entries, :harvest_user]}
@@ -48,4 +48,3 @@ Redmine::Plugin.register :redmine_harvest_smc do
        :if => Proc.new { User.current.logged? })
 
 end
-

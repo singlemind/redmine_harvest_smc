@@ -4,6 +4,10 @@ class HarvestSync < ActiveRecord::Base
   before_save :set_updated_at
   before_create :set_created_at
   
+  scope :of, lambda { |userID|
+    where :for_redmine_user_id => userID
+  } 
+
   def set_updated_at
     self.updated_at = Time.now
   end

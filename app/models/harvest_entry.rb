@@ -12,6 +12,7 @@ class HarvestEntry < ActiveRecord::Base
   	force_timer = false
   	new_status = "new"
   	error_string = ""
+    redmine_name = User.find(redmine_user_id).name
 
     harvest_user = HarvestUser.find_by_redmine_user_id(redmine_user_id)
     if (harvest_user.nil?)
@@ -38,6 +39,7 @@ class HarvestEntry < ActiveRecord::Base
       harvest_sync.day_of_the_year = day_of_the_year
       harvest_sync.year = Time.now.year
       harvest_sync.status = "new"
+      harvest_sync.for_redmine_user_id = redmine_user_id
       #TODO: map/collect a list of entry ids and save to new field.
       harvest_sync.save!
       
@@ -59,8 +61,8 @@ class HarvestEntry < ActiveRecord::Base
 
         begin 
         	#check to see if this entry has a harvest id that already exists in our db. 
-          #debugger
           prev_entry = HarvestEntry.find_by_harvest_id(harvest_entry.harvest_id)
+          #TODO: dirty record checking...
           next if prev_entry or force_reload
         #TODO: rescue RecordNotFound err...
         rescue 
@@ -79,12 +81,13 @@ class HarvestEntry < ActiveRecord::Base
         harvest_entry.notes = entry.xpath("notes").text
         harvest_entry.status = new_status
         harvest_entry.redmine_user_id = redmine_user_id
+        harvest_entry.redmine_name = redmine_name
         #hours_match = true if (prev_entry.hours == harvest_entry.hours)
         harvest_entry.save! unless prev_entry
         
         #use .inspect here...
-        logger.info  "id: #{entry.xpath("id").text} | "
-        logger.info  "hours: #{entry.xpath("hours").text} | "
+        #logger.info  "id: #{entry.xpath("id").text} | "
+        #logger.info  "hours: #{entry.xpath("hours").text} | "
         #logger.info  "hours_without_timer: #{entry.xpath("hours_without_timer").text} | "
         #logger.info  "spent_at: #{entry.xpath("spent_at").text} | "
         #logger.info  "user_id: #{entry.xpath("user_id").text} | "
@@ -93,7 +96,7 @@ class HarvestEntry < ActiveRecord::Base
         #logger.info  "project: #{entry.xpath("project").text} | "
         #logger.info  "task_id #{entry.xpath("task_id").text} | "
         #logger.info  "task: #{entry.xpath("task").text} | "
-        logger.info  "notes: #{entry.xpath("notes").text} | "
+        #logger.info  "notes: #{entry.xpath("notes").text} | "
       end #each
       
     rescue Exception => e
@@ -111,24 +114,29 @@ class HarvestEntry < ActiveRecord::Base
 
   	harvest_entries.each do |entry|
   		redmine_issue_id = entry.notes.match /\d{4}/
-  		next unless redmine_issue_id
-      #TODO: do not use hard-coded redmine_user_id
-      #next migration will have access to entry.redmine_user_entry.redmine_user_id
-      user = User.find(entry.redmine_user_id)
-  		issue = Issue.find(redmine_issue_id.to_s)
-      project = issue.project
-      activity = TimeEntryActivity.find_by_name('Development')
 
-      te = TimeEntry.create(:spent_on => Date.strptime(entry.spent_at, '%Y-%m-%d'),
-                          :hours    => entry.hours,
-                          :issue    => issue,
-                          :project  => project,
-                          :user     => user,
-                          :activity => activity,
-                          :comments => entry.notes.mb_chars[0..255].strip.to_s) # Truncate comments to 255 charz
-      
-      te.save!
-      entry.status = "synced"
+  		#next unless redmine_issue_id
+      #TODO: set the status of the entry as :unmatched
+      if redmine_issue_id
+        user = User.find(entry.redmine_user_id)
+    		issue = Issue.find(redmine_issue_id.to_s)
+        project = issue.project
+        #TODO: reflect what Harvest Has?
+        activity = TimeEntryActivity.find_by_name('Development')
+
+        te = TimeEntry.create(:spent_on => Date.strptime(entry.spent_at, '%Y-%m-%d'),
+                            :hours    => entry.hours,
+                            :issue    => issue,
+                            :project  => project,
+                            :user     => user,
+                            :activity => activity,
+                            :comments => entry.notes.mb_chars[0..255].strip.to_s) # Truncate comments to 255 charz
+        
+        te.save!
+        entry.status = "synced"
+      else 
+        entry.status = "unmatched"
+      end  
       entry.save!
       
   	end

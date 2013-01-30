@@ -6,11 +6,13 @@ class CreateHarvestSyncs < ActiveRecord::Migration
       t.datetime :created_at
       t.datetime :updated_at
       t.string :status
-      t.string :matched_entries
-      t.string :unmatched_entries
+      t.integer :for_redmine_user_id
+
     end
     add_index :harvest_syncs, :day_of_the_year
     add_index :harvest_syncs, :year
     add_index :harvest_syncs, :status
+    add_index :harvest_syncs, :for_redmine_user_id
+
   end
 end
