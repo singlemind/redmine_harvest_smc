@@ -15,5 +15,7 @@ match 'harvest_fetch' => 'harvest_entry#harvest_fetch', :as => :harvest_fetch
 match 'harvest_fetch/day/today' => 'harvest_entry#harvest_fetch_day', :day => 'today', :via => :get, :as => :harvest_fetch_today
 match 'harvest_fetch/day/:day' => 'harvest_entry#harvest_fetch_day', :day => /\d/, :via => :get, :as => :harvest_fetch_day
 match 'harvest_fetch/week/:week' => 'harvest_entry#harvest_fetch_week', :week => 'current', :via => :get, :as => :harvest_fetch_week
+match 'harvest_reconcile' => 'harvest_entry#checkbox_action', :via => :post, :as => :harvest_reconcile
+
 match 'hatvest_sync' => 'harvest_entry#harvest_sync_status', :status => 'new', :via => :get, :as => :harvest_sync_status_new
 match 'hatvest_sync/:status' => 'harvest_entry#harvest_sync_status', :status => /\/s/, :via => :get, :as => :harvest_sync_status

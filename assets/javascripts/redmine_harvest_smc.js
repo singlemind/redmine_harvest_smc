@@ -78,10 +78,10 @@ $(document).ready(function() {
 	setTimeout(redrawTimeout, 100);
 
 	$('#rm_smc_reset_filterz').click( function(e){
-		
+		e.preventDefault();
 		$.cookie('SpryMedia_DataTables_redmine_harvest_smc_table_harvest', null, { path: '/' });
 		//$.removeCookie("SpryMedia_DataTables_redmine_harvest_smc_table_");
-	
+		window.location.reload(true);
 	});
 
 	// $('#rm_smc_fetch_today').click( function(e){

@@ -43,16 +43,29 @@
             .hide()
             .menu();
   });
+
+  $(function() {
+    $("#rm_smc_sync").click(function() {
+        $('#harvest_entry_rm_smc_checbox_action').val('reconcile');
+        $('form').submit();
+        return false;
+    });
+    $("#rm_smc_destroy").click(function() {
+        $('#harvest_entry_rm_smc_checbox_action').val('destroy');
+        $('form').submit();
+        return false;
+    });
+  });
   </script>
 
 <% end %>
 
-<form>
+<%= form_for :harvest_entry, :url =>{:action=>"checkbox_action"} do | f | -%>
     <% unless @did_fetch_new_entries %>
-            <button id="rm_smc_fetch_today" href="<%= harvest_fetch_today_path %>">Fetch Today</button>
+            <button id="rm_smc_fetch_today" href="<%= harvest_fetch_today_path %>" onclick="return false;" >Fetch Today</button>
         <% end %>
-            <button id="rm_smc_fetch_week" href="<%= harvest_fetch_week_path %>">Fetch Past Week</button>
-            <button id="rm_smc_reset_filterz">Reset Filters</button>
+            <a id="rm_smc_fetch_week" href="<%= harvest_fetch_week_path %>">Fetch Past Week</a>
+            <button id="rm_smc_reset_filterz" href="<%= harvest_path %>" >Reset Filters</button>
 
             <!-- harvest_sync_status_new.path harvest_sync_status.path -->
 <table cellpadding="0" cellspacing="0" border="0" class="display" id="redmine_harvest_smc_table">
@@ -65,8 +78,8 @@
                 <div id="rm_smc_controlz">
                     <div><button id="rerun"></button></div>
                       <ul>
-                        <li><a href="#">Sync</a></li>
-                        <li><a href="#">Delete</a></li>
+                        <li><a href="#" id="rm_smc_sync"><%= t :rm_smc_sync %></a></li>
+                        <li><a href="#" id="rm_smc_destroy"><%= t :rm_smc_destroy %></a></li>
                       </ul>  
                 </div>
             </td>
@@ -102,14 +115,22 @@
     <tbody>
             <% @harvest_entries.each do |entry| %>
             <tr>
-                <td><input type="checkbox" name="foo" value="bar" class="chkbx_shft_lstnr"></td>
+                <td><input type="checkbox" name="harvest_entries[]" value="<%=entry.id%>" class="chkbx_shft_lstnr" /></td>
 
 
                 <td><a href="https://singlemind.harvestapp.com/time/day/<%= Date.strptime(entry.spent_at, '%Y-%m-%d').strftime('%Y/%m/%d') %>" title="link to harvest" class="entry_link_to_harvest">⃔</a></td>
                 <td><%= entry.status %></td>
                 <td><%= Date.strptime(entry.spent_at, '%Y-%m-%d').strftime('%m/%d/%Y') %></td>
                 <td><%= entry.redmine_name %></td>
-                <td><%= entry.redmine_issue_id %></td>
+                <td>
+                    <% if entry.redmine_issue_id and !entry.status.scan(/matched|complete|locked/).empty? %>
+                    <a href="/issues/<%= entry.redmine_issue_id %>" title="link to issue" >
+                        <%= entry.redmine_issue_id %>
+                    </a>
+                    <% else %>
+                        <%= entry.redmine_issue_id %>
+                    <% end %>
+                </td>
                 <td><%= entry.client %></td>
                 <td><%= entry.task %></td>
                 <td><%= entry.hours %></td>
@@ -118,4 +139,5 @@
             <% end %>
     </tbody>
 </table>
-</form>
+<%= f.hidden_field :rm_smc_checbox_action, :value => "no" %>
+<% end #form -%>

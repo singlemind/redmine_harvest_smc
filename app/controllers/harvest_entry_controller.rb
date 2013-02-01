@@ -11,10 +11,15 @@ class HarvestEntryController < ApplicationController
     #, :conditions => { :created_at => Time.now }
     #fetch_entries(redmine_user_id, day_of_the_year = Time.now.yday, year = Time.now.year)
     
-    # courtesy fetch entries for today and for this user
-    courtesy_fetch
-
-    @harvest_entries = HarvestEntry.of(User.current.id).status(params[:status].to_s)
+    # courtesy fetch entries for today and for this user?? 
+    #courtesy_fetch
+    @did_fetch_new_entries = false
+    
+    if params[:status]
+      @harvest_entries = HarvestEntry.of(User.current.id).status(params[:status].to_s)
+    else 
+      @harvest_entries = HarvestEntry.of User.current.id
+    end
 
   end
 
@@ -95,9 +100,55 @@ class HarvestEntryController < ApplicationController
     end
   end #harvest_fetch_week
 
+  def checkbox_action 
+    logger.info "_______________ CHECKBOX_ACTION"
+    if request.post? and params[:harvest_entry]
+      logger.info "____________ #{params[:harvest_entry]["rm_smc_checbox_action"]}"
+      if params[:harvest_entry]["rm_smc_checbox_action"] == 'reconcile'
+        logger.info "------ reconcile reconcile reconcile!"
+        reconcile
+      elsif params[:harvest_entry]["rm_smc_checbox_action"] == 'destroy'
+        logger.info "------ destroy destroy destroy!"
+        destroy
+      end
+
+    end
+  end
+
+  def reconcile 
+    logger.warn "----- #{params.inspect}"
+    #TODO: case switch for action type 
+    #harvest_entries?
+    if request.post? and params[:harvest_entries]
+      #logger.info params.inspect
+      params[:status] ||= 'new'
+      HarvestEntry.update_rm_id_and_status_for_each_entry(params[:harvest_entries], params[:status], User.current.id)
+
+      #flash[:notice] = HarvestEntry.where(:status => params[:status], :id => params[:harvest_entries], :redmine_user_id => User.current.id ).count.to_s
+      redirect_to :action => "index"
+    end
+  end
+
+  def destroy 
+    logger.warn "------------- #{params.inspect}"
+    #TODO: case switch for action type 
+    #harvest_entries?
+    if params[:harvest_entries]
+      #logger.info params.inspect
+      logger.info "______-__-_-__-_-_-_ GONNA DESTORYR "
+
+      HarvestEntry.destroy_for_each_entry(params[:harvest_entries], User.current.id)
+
+      #flash[:notice] = HarvestEntry.where(:status => params[:status], :id => params[:harvest_entries], :redmine_user_id => User.current.id ).count.to_s
+ 
+      redirect_to :action => "index"
+    end
+  end
+
   def sync_status
 
     if params[:entries]
+      params[:status]||= 'new'
       HarvestEntry.of(User.current.id).update_rm_id_and_status_for_each_entry(params[:entries], params[:status], User.current.id)
     elsif params[:status]
       HarvestEntry.of(User.current.id).update_rm_id_and_status_for_each_entry([], params[:status], User.current.id)

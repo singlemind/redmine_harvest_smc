@@ -1,7 +1,7 @@
 class HarvestEntry < ActiveRecord::Base
   unloadable
   
-  STATUS_STRINGS = [ 'new', 'problem', 'matched', 'unmatched', 'flagged', 'complete', 'locked' ]
+  STATUS_STRINGS = [ 'new', 'problem', 'matched', 'unmatched', 'flagged', 'reconciled', 'locked' ]
   DEFAULT_STATUS = 'new'
   
   attr_accessor :error_string
@@ -9,6 +9,9 @@ class HarvestEntry < ActiveRecord::Base
   before_save :set_updated_at
   before_create :set_created_at
   
+
+  default_scope :conditions => [ 'status != "destroyed"' ]
+
   scope :of, lambda { |userID|
     where :redmine_user_id => userID
   } 
@@ -251,26 +254,36 @@ class HarvestEntry < ActiveRecord::Base
       end  
       entry.save!
       
-  	end #end self.set_time_for_each_entry
+  	end 
 
-    def self.update_rm_id_and_status_for_each_entry(entries = [], status = 'new', userID = nil )
+  end #end self.set_time_for_each_entry
 
-      HarvestEntry.where(:status => status, :entry => entries, :redmine_user_id => userID ).each do |e|
-        #TODO: export regex as settings string...
-        redmine_issue_id = e.notes.match /\d{4}/
-        if redmine_issue_id.empty?
-          e.status = 'unmatched'
-        else 
-          e.status = 'maatched'
-          e.redmine_issue_id = redmine_issue_id
+  # hey look at that, if you toss an [ a, r, r, a, y ] at a col name active record uses a WHERE IN
+  def self.update_rm_id_and_status_for_each_entry(entries = [], status = 'new', userID = nil )
+
+    entry = HarvestEntry.where(:status => status, :id => entries, :redmine_user_id => userID ).each do |e|
+      #TODO: export regex as settings string...
+      redmine_issue_id = e.notes.match /\d{4}/
+      if redmine_issue_id
+        e.redmine_issue_id = redmine_issue_id[0].to_i
+        e.status = 'matched'
+        unless Issue.find_by_id(redmine_issue_id[0].to_i)
+          e.status = 'problem'
         end
+      else 
+        e.status = 'unmatched'
       end
-    end #update_rm_id_and_status_for_each_entry
+      e.save!
+    end
 
+    return entry
+  end #update_rm_id_and_status_for_each_entry
 
-    
-
-
+  def self.destroy_for_each_entry (entries = [], userID = nil)
+    entries = HarvestEntry.where( :id => entries, :redmine_user_id => userID ).each do |entry|
+      entry.status = 'destroyed'
+      entries.save!
+    end
   end
 
   def set_updated_at
