@@ -27,6 +27,13 @@ class HarvestEntry < ActiveRecord::Base
     d = Date.strptime("#{year}-#{day}", "%Y-%j").to_s
     where :spent_at => d
   }
+
+  scope :uniq_project, select("DISTINCT project")
+
+  scope :uniq_task, select("DISTINCT task")
+
+  scope :uniq_client, select("DISTINCT client")
+
   def self.fetch_entries(redmine_user_id, day_of_the_year = Time.now.yday, year = Time.now.year)
   	force_sync = true 
   	force_timer = false

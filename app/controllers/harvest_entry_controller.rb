@@ -58,6 +58,14 @@ class HarvestEntryController < ApplicationController
   def harvest_settings
 
     @harvest_settings = HarvestSettings.of User.current.id
+    uniq_for_settings = []
+    uniq_for_settings << HarvestEntry.of(User.current.id).uniq_project.collect{|p| p.project}
+    uniq_for_settings << HarvestEntry.of(User.current.id).uniq_client.collect{|c| c.client}
+    uniq_for_settings << HarvestEntry.of(User.current.id).uniq_task.collect{|t| t.task}
+
+    @uniq_for_settings = uniq_for_settings.flatten.compact #.collect{|p| }
+    logger.info "UNIQ_FOR_SETTINGS: #{@uniq_for_settings}"
+    #HarvestEntry.of(User.current.id).uniq_project
 
     if request.post? 
       logger.info '^^^^^^^^^^^^^^^^^^^^^^ POST POST POST POST'
