@@ -5,6 +5,8 @@ class HarvestEntry < ActiveRecord::Base
   DESTROYED_STATUS = 'destroyed'
   DEFAULT_STATUS = 'new'
   VALIDATION_STATUS = 'validation'
+  MATCHED_STATUS = 'matched'
+  PROBLEM_STATUS = 'problem'
   
   attr_accessor :error_string
 
@@ -231,9 +233,20 @@ class HarvestEntry < ActiveRecord::Base
       harvest_settings.each do |setting|
         if e.notes =~ /#{Regexp.escape(setting.notes_string)}/
           e.redmine_issue_id = setting.redmine_issue
-          #TODO: some other status? perhaps another round of validation? (could just catch-all later...)
-          e.status = 'matched'
-          e.status = 'problem' unless Issue.find_by_id(setting.redmine_issue)
+          e.status = MATCHED_STATUS
+          e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)
+        elsif e.project =~ /#{Regexp.escape(setting.notes_string)}/
+          e.redmine_issue_id = setting.redmine_issue
+          e.status = MATCHED_STATUS
+          e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)
+        elsif e.task =~ /#{Regexp.escape(setting.notes_string)}/
+          e.redmine_issue_id = setting.redmine_issue
+          e.status = MATCHED_STATUS
+          e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)  
+        elsif e.client =~ /#{Regexp.escape(setting.notes_string)}/
+          e.redmine_issue_id = setting.redmine_issue
+          e.status = MATCHED_STATUS
+          e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)
         else 
           #if there is already a redmine_issue_id, should not set the status to problem.
           e.status = 'problem' if e.redmine_issue_id.blank?

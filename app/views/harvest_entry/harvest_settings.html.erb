@@ -7,9 +7,25 @@
         var i = $('#rm_smc_settings tr').size() + 1;
         
         $('#addSetting').click( function() {
-                $('<tr><td><input type="text" id="rm_smc_setting" size="25" name="new_settings[redmine_harvest_smc_notes_string' + i +']" value="" placeholder="HARVEST NOTES STRING" /></td><td>→</td><td><input type="text" id="rm_smc_setting_redmine_issue" size="16" name="new_settings[redmine_harvest_smc_redmine_issue' + i +']" value="" placeholder="REDMINE ISSUE ID" /><a href="#" id="rmSetting">X</a></td></tr>').appendTo(settingz);
-                i++;
-                return false;
+          //<input type="text" id="rm_smc_setting" size="25" name="new_settings[redmine_harvest_smc_notes_string' + i +']" value="" placeholder="HARVEST NOTES STRING" />
+          var new_row = $('<tr><td id="clone_placeholder'+i+'"></td><td>→</td><td><input type="text" id="rm_smc_setting_redmine_issue'+i+'" size="16" name="new_settings[redmine_harvest_smc_redmine_issue' + i +']" value="" placeholder="REDMINE ISSUE ID" /><a href="#" id="rmSetting">X</a></td></tr>');
+           //.insertAfter('.ui-widget:last').find('input, button').remove();
+          new_row.appendTo(settingz);
+
+
+          var clone_id_str = '#clone_placeholder'+i;
+          var clone_placeholder = $(clone_id_str);
+          var new_clone_id = '#combobox'+i
+          var clone = $('#combobox').clone().attr('id', new_clone_id);
+          var clone_new_name = 'new_settings[redmine_harvest_smc_notes_string' + i +']'
+          clone.attr('name', clone_new_name);
+          
+          
+          clone.appendTo(clone_placeholder);
+
+          $(clone).combobox();
+          i++;
+          return false;
         });
         
         $('#rmSetting').live('click', function() { 
@@ -41,6 +57,13 @@
   .ui-combobox-input {
     margin: 0;
     padding: 0.3em;
+    width: 300px;
+  }
+  .ui-state-default {
+    color: #000000;
+  }
+  table#rm_smc_settings td {
+   padding-right: 50px;
   }
   </style>
   <script>
@@ -57,29 +80,11 @@
             .addClass( "ui-combobox" )
             .insertAfter( select );
  
-        function removeIfInvalid( element ) {
-          var value = $( element ).val(),
-            matcher = new RegExp( "^" + $.ui.autocomplete.escapeRegex( value ) + "$", "i" ),
-            valid = false;
-          select.children( "option" ).each(function() {
-            if ( $( this ).text().match( matcher ) ) {
-              this.selected = valid = true;
-              return false;
-            }
-          });
- 
-          if ( !valid ) {
-            // remove invalid value, as it didn't match anything
-            $( element )
-              .val( "" )
-              .attr( "title", value + " didn't match any item" )
-              .tooltip( "open" );
-            select.val( "" );
-            setTimeout(function() {
-              input.tooltip( "close" ).attr( "title", "" );
-            }, 2500 );
-            input.data( "ui-autocomplete" ).term = "";
-          }
+        function addNewElem( element ) {
+          var value = $( element ).val();
+    
+          $( select ).append($('<option selected="selected"></option>').val(value).html(value));      
+          
         }
  
         input = $( "<input>" )
@@ -115,7 +120,9 @@
             },
             change: function( event, ui ) {
               if ( !ui.item ) {
-                removeIfInvalid( this );
+                addNewElem( this );
+
+
               }
             }
           })
@@ -215,7 +222,12 @@
 
   <tr>
     <td>
-      <%= text_field_tag "new_settings[redmine_harvest_smc_notes_string]", nil, :placeholder => "HARVEST NOTES STRING", :size => 25 %>
+     
+      <div class="ui-widget">
+        
+        <%= select_tag("new_settings[redmine_harvest_smc_notes_string]", options_for_select(@uniq_for_settings), :include_blank => true, :id => :combobox) %>
+        
+      </div>
     </td>
     <td>
       →
@@ -224,17 +236,6 @@
     	<%= text_field_tag "new_settings[redmine_harvest_smc_redmine_issue]", nil, :placeholder => "REDMINE ISSUE ID", :size => 16 %>
     </td>
       
-  </tr>
-
-  <tr>
-    <td>
-      <div class="ui-widget">
-        <label></label>
-        
-        <%= select_tag(:combobox, options_for_select(@uniq_for_settings)) %>
-        
-      </div>
-    </td>
   </tr>
 
   <tfoot>
