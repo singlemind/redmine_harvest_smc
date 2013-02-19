@@ -32,3 +32,4 @@ en:
   rm_smc_regex: "Harvest Notes String"
   rm_smc_applies_to: "to"
   rm_smc_rm_issue: "Redmine Issue ID"
+  rm_smc_validate: "Validate Dates"

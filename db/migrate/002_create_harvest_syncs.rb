@@ -8,6 +8,14 @@ class CreateHarvestSyncs < ActiveRecord::Migration
       t.string :status
       t.integer :for_redmine_user_id
 
+      #validation
+      t.integer :harvest_day_total_entries
+      t.float :harvest_day_total_time
+      t.integer :redmine_day_total_issues
+      t.float :redmine_day_total_time
+
+      
+
     end
     add_index :harvest_syncs, :day_of_the_year
     add_index :harvest_syncs, :year

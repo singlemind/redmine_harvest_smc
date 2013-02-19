@@ -16,7 +16,13 @@ class HarvestEntryController < ApplicationController
     @did_fetch_new_entries = false
     
     if params[:status]
-      @harvest_entries = HarvestEntry.of(User.current.id).status(params[:status].to_s).order(:status => :desc)
+      if params[:status] == 'destroyed'
+        # unscoped could mean bad juju...
+        @harvest_entries = HarvestEntry.unscoped.of(User.current.id).status(params[:status].to_s).order(:status => :desc)
+      else 
+        @harvest_entries = HarvestEntry.of(User.current.id).status(params[:status].to_s).order(:status => :desc)
+      end
+      
     else 
       @harvest_entries = HarvestEntry.of(User.current.id).order(:status => :desc)
     end
@@ -137,11 +143,12 @@ class HarvestEntryController < ApplicationController
 
   end
 
+  # UNUSED! 
   def harvest_fetch_week
     
     @did_fetch_new_entries = true
     #throw out the blanks
-    myFlashNotice = fetch_entries_from_to((Time.now.yday - 7), Time.now.yday)
+    myFlashNotice = HarvestEntry.fetch_entries_from_to(User.current.id, (Time.now.yday - 7), Time.now.yday)
     
 
     begin
@@ -161,6 +168,7 @@ class HarvestEntryController < ApplicationController
     end
   end #harvest_fetch_week
 
+  # UNUSED!
   def checkbox_action 
     logger.info "_______________ CHECKBOX_ACTION"
     if request.post? and params[:harvest_entry]
@@ -195,7 +203,9 @@ class HarvestEntryController < ApplicationController
 
     if request.post? and params[:harvest_entry] and params[:harvest_entry][:from] and params[:harvest_entry][:to]
 
-      myFlashNotice = fetch_entries_from_to(params[:harvest_entry][:from], params[:harvest_entry][:to])
+      from = params[:harvest_entry][:from]
+      to = params[:harvest_entry][:to]
+      myFlashNotice = HarvestEntry.fetch_entries_from_to(User.current.id, from, to)
       
       begin
         unless myFlashNotice.empty?
@@ -206,22 +216,29 @@ class HarvestEntryController < ApplicationController
         flash[:error] = l :rm_smc_please_setup_harvest_user
       end
 
+
+      if params[:harvest_entry]["rm_smc_checbox_action"] == 'validate'
+        for i in from..to do 
+          logger.info "------------- VALIDATING ENTRIES!"
+          HarvestEntry.validate_entries_for(User.current.id, i)
+        end
+        
+      end
       redirect_to :action => "index"
       return
     end
 
     #TODO: trap errz
-    HarvestEntry.update_rm_id_for_all_entries(User.current.id)
+    
     
     #flash[:notice] = HarvestEntry.where(:status => params[:status], :id => params[:harvest_entries], :redmine_user_id => User.current.id ).count.to_s
     
     #of(User.current.id)
     HarvestEntry.reconcile User.current.id
 
-    HarvestEntry.set_time_for_all_entries(User.current.id)
 
 
-    logger.info '))))))))))))))))))))))) NOOO DATE!'
+    logger.info 'NO DATE SPECIFIED!'
     redirect_to :action => "index"
 
 
@@ -286,15 +303,7 @@ class HarvestEntryController < ApplicationController
     end
   end
 
-  def fetch_entries_from_to (from = Time.now.yday, to = Time.now.yday )
-    myFlashNotice = []
-    for i in from..to do 
-      #myFlashNotice << " day #{i} : "
-      myFlashNotice << HarvestEntry.fetch_entries(User.current.id, i)
-    end
-
-    return myFlashNotice.reject {|x| x == ""}
-  end
+  
 
 
 end #class

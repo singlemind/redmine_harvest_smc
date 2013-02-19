@@ -2,15 +2,17 @@ class HarvestEntry < ActiveRecord::Base
   unloadable
   
   STATUS_STRINGS = [ 'new', 'problem', 'matched', 'unmatched', 'flagged', 'reconciled', 'locked' ]
+  DESTROYED_STATUS = 'destroyed'
   DEFAULT_STATUS = 'new'
+  VALIDATION_STATUS = 'validation'
   
   attr_accessor :error_string
 
   before_save :set_updated_at
   before_create :set_created_at
   
-
-  default_scope :conditions => [ 'status != "destroyed"' ]
+  #DESTROYED_STATUS
+  default_scope :conditions => [ "status != '#{DESTROYED_STATUS}'" ]
 
   scope :of, lambda { |userID|
     where :redmine_user_id => userID
@@ -21,10 +23,13 @@ class HarvestEntry < ActiveRecord::Base
     where :status => s
   } 
 
+  scope :for_year_and_day, lambda { |year, day| 
+    d = Date.strptime("#{year}-#{day}", "%Y-%j").to_s
+    where :spent_at => d
+  }
   def self.fetch_entries(redmine_user_id, day_of_the_year = Time.now.yday, year = Time.now.year)
   	force_sync = true 
   	force_timer = false
-  	new_status = "new"
   	error_string = ""
     redmine_name = User.find(redmine_user_id).name
 
@@ -52,7 +57,7 @@ class HarvestEntry < ActiveRecord::Base
       harvest_sync = HarvestSync.new
       harvest_sync.day_of_the_year = day_of_the_year
       harvest_sync.year = Time.now.year
-      harvest_sync.status = "new"
+      harvest_sync.status = DEFAULT_STATUS
       harvest_sync.for_redmine_user_id = redmine_user_id
       #TODO: map/collect a list of entry ids and save to new field.
       harvest_sync.save!
@@ -93,7 +98,7 @@ class HarvestEntry < ActiveRecord::Base
         harvest_entry.task_id = entry.xpath("task_id").text
         harvest_entry.task = entry.xpath("task").text
         harvest_entry.notes = entry.xpath("notes").text
-        harvest_entry.status = new_status
+        harvest_entry.status = DEFAULT_STATUS
         harvest_entry.redmine_user_id = redmine_user_id
         harvest_entry.redmine_name = redmine_name
         #hours_match = true if (prev_entry.hours == harvest_entry.hours)
@@ -168,7 +173,7 @@ class HarvestEntry < ActiveRecord::Base
   end #end self.set_time_for_each_entry
 
   # hey look at that, if you toss an [ a, r, r, a, y ] at a col name active record uses a WHERE IN
-  def self.update_rm_id_for_each_entry(entries = [], userID = nil, status = 'new' )
+  def self.update_rm_id_for_each_entry(entries = [], userID = nil, status = DEFAULT_STATUS )
 
     entry = HarvestEntry.where(:status => status, :id => entries, :redmine_user_id => userID ).each do |e|
       #TODO: export regex as settings string...
@@ -189,7 +194,7 @@ class HarvestEntry < ActiveRecord::Base
     return entry
   end #update_rm_id_for_each_entry
 
-  def self.update_rm_id_for_all_entries(userID = nil, status = 'new')
+  def self.update_rm_id_for_all_entries(userID = nil, status = DEFAULT_STATUS)
     entry = HarvestEntry.where(:status => status, :redmine_user_id => userID ).each do |e|
       #TODO: export regex as settings string...
       redmine_issue_id = e.notes.match /\d{4}/
@@ -210,6 +215,9 @@ class HarvestEntry < ActiveRecord::Base
 
   def self.reconcile(userID = nil, status = 'problem')
     
+    HarvestEntry.update_rm_id_for_all_entries(userID)
+
+
     entry = HarvestEntry.where(:status => status, :redmine_user_id => userID ).each do |e|
       harvest_settings = HarvestSettings.of userID
       
@@ -228,15 +236,152 @@ class HarvestEntry < ActiveRecord::Base
       end
       
     end
+
+    HarvestEntry.set_time_for_all_entries(userID)
+
+
   end
 
   #TODO: method that validates all entries in Redmine still exist in Harvest
+  def self.validate_entries_for(redmine_user_id, day_of_the_year = Time.now.yday, year = Time.now.year)
+
+
+    error_string = ""
+    redmine_name = User.find(redmine_user_id).name
+
+    harvest_user = HarvestUser.find_by_redmine_user_id(redmine_user_id)
+    if (harvest_user.nil?)
+      #flash[:error] = "#{l(:no_user_set)}"
+      #error_string << l(:no_user_set)
+      logger.error "NO USER SET"
+      error_string << "NO USER SET"
+      return 
+    end
+    harvest = HarvestClient.new(harvest_user.decrypt_username,harvest_user.decrypt_password)
+
+    begin 
+
+      response = harvest.request "/daily/#{day_of_the_year}/#{year}", :get
+      #logger.info  response.body
+      xml_doc = Nokogiri::XML(response.body)
+
+    
+
+      harvest_sync = HarvestSync.new
+      harvest_sync.day_of_the_year = day_of_the_year
+      harvest_sync.year = year
+      harvest_sync.status = VALIDATION_STATUS
+      harvest_sync.for_redmine_user_id = redmine_user_id
+      #TODO: map/collect a list of entry ids and save to new field.
+      
+      harvest_day = xml_doc.xpath("//day_entry").collect{|e| e.xpath("hours").text.to_f }
+      harvest_sync.harvest_day_total_entries = harvest_day.count
+      harvest_sync.harvest_day_total_time = harvest_day.sum
+
+      redmine_day = HarvestEntry.of(redmine_user_id).for_year_and_day(year, day_of_the_year)
+      harvest_sync.redmine_day_total_issues = redmine_day.count
+      harvest_sync.redmine_day_total_time = redmine_day.collect{|h| h.hours.to_f}.sum.round(1)
+
+
+      
+      
+      total_entries_diff = harvest_sync.harvest_day_total_entries == harvest_sync.redmine_day_total_issues
+      total_time_diff = harvest_sync.harvest_day_total_time.round(1) == harvest_sync.redmine_day_total_time
+
+      logger.info "YEAR: #{year}, DAY_OF_THE_YEAR: #{day_of_the_year}, TOTAL_ENTRIES_DIFF: #{total_entries_diff}, TOTAL_TIME_DIFF: #{total_time_diff}"
+      logger.info "HARVEST_DAY_TOTAL_ENTRIES: #{harvest_sync.harvest_day_total_entries}, REDMINE_DAY_TOTAL_ISSUES: #{harvest_sync.redmine_day_total_issues}"
+      logger.info "HARVEST_DAY_TOTAL_TIME: #{harvest_sync.harvest_day_total_time.round(1)}, REDMINE_DAY_TOTAL_TIME: #{harvest_sync.redmine_day_total_time}"
+
+      
+
+      if !total_entries_diff or !total_time_diff 
+        harvest_sync.status = 'problem'
+        harvest_sync.save!
+        # is there a problem? drop & fetch day. (ACCOUNT FOR TimeEntries!)
+
+        to_destroy = HarvestEntry.for_year_and_day(year, day_of_the_year).collect{|e| e.id}
+        logger.warn "GOING TO DESTROY #{to_destroy.count} RECORDS OF USER: #{redmine_user_id}. INSPECT: #{to_destroy.inspect}" unless to_destroy.blank?
+
+        HarvestEntry.destroy_for_each_entry(to_destroy, redmine_user_id)
+
+        # NOW RECREATE ENTRIES FOR THE DAYS. BLAM! N\'SYNC!  
+        #  but srsly, this might not be necessary, as we could just call the fetch method 
+        #   to restart the check, process, validation cycle?
+        xml_doc.xpath("//day_entry").each do |entry|
+        
+          harvest_entry = HarvestEntry.new
+
+          harvest_entry.harvest_id          = entry.xpath("id").text
+          harvest_entry.hours               = entry.xpath("hours").text
+          harvest_entry.hours_without_timer = entry.xpath("hours_without_timer").text
+          
+          harvest_entry.spent_at            = entry.xpath("spent_at").text
+          harvest_entry.user_id             = entry.xpath("user_id").text
+          harvest_entry.client              = entry.xpath("client").text
+          harvest_entry.project_id          = entry.xpath("project_id").text
+          harvest_entry.project             = entry.xpath("project").text
+          harvest_entry.task_id             = entry.xpath("task_id").text
+          harvest_entry.task                = entry.xpath("task").text
+          harvest_entry.notes               = entry.xpath("notes").text
+          harvest_entry.status              = DEFAULT_STATUS
+          harvest_entry.redmine_user_id     = redmine_user_id
+          harvest_entry.redmine_name        = redmine_name
+
+          harvest_entry.save! 
+
+        end #each
+
+        harvest_sync.status = 'complete'
+        harvest_sync.save!
+
+        #call sync to update 'new' entries.
+        logger.info "GOING TO FETCH ENTRIES!"
+        fetch_entries_from_to(redmine_user_id, day_of_the_year, day_of_the_year)
+        reconcile(redmine_user_id)
+
+        #fetch_entries( redmine_user_id, day_of_the_year, year )
+        #update_rm_id_for_all_entries
+        #set_time_for_all_entries
+
+      end
+    
+
+      #PHEW! we just got through a lot, mmm, does that feel good?
+
+    rescue Exception => e
+      # error_string is a attr_accessor 
+      error_string << "#{l(:harvest_api_error)}: #{e} "
+    end 
+    return error_string  
+  end #validate_entries
+
+
 
   def self.destroy_for_each_entry (entries = [], userID = nil)
     entries = HarvestEntry.where( :id => entries, :redmine_user_id => userID ).each do |entry|
-      entry.status = 'destroyed'
-      entries.save!
+      # check to see if there is a time entry
+      unless entry.redmine_time_entry_id.blank?
+        begin 
+          TimeEntry.find(entry.redmine_time_entry_id).destroy
+        rescue Exception => e
+          logger.error "CAUGHT EXCEPTION: #{e}"
+        end
+      end #unless
+      
+      entry.status = DESTROYED_STATUS
+      entry.save!
+
+    end #entries
+  end
+
+  def self.fetch_entries_from_to (userID = nil, from = Time.now.yday, to = Time.now.yday )
+    myFlashNotice = []
+    for i in from..to do 
+      #myFlashNotice << " day #{i} : "
+      myFlashNotice << HarvestEntry.fetch_entries(userID, i)
     end
+
+    return myFlashNotice
   end
 
   def set_updated_at

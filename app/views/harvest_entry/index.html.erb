@@ -106,6 +106,20 @@
           $('form').submit();
           return false;
         }
+    });
+
+    $('#rm_smc_validate').click( function(e){
+        if ( $( "#rm_smc_from" ).val()=="") {
+          $( "#rm_smc_from" ).effect("highlight", {color: 'red'}, 3000);
+          return false;
+        } else if ($( "#rm_smc_to" ).val() == "") {
+          $( "#rm_smc_to" ).effect("highlight", {color: 'red'}, 3000);
+          return false;
+        } else {
+          $('#harvest_entry_rm_smc_checbox_action').val('validate');
+          $('form').submit();
+          return false;
+        }
         
 
     });
@@ -155,8 +169,8 @@
             <label for="to"><%= t :rm_smc_to %></label>
             <input type="text" id="rm_smc_to" name="harvest_entry[to]" />
             <button id="rm_smc_sync_dates" href="#" ><%= t :rm_smc_sync_dates %></button>
+            <button id="rm_smc_validate" href="#" ><%= t :rm_smc_validate %>
             <br />
-          
         </div>
     </fieldset>
           
