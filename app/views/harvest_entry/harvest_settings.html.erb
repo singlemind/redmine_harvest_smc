@@ -1,0 +1,85 @@
+<% content_for :header_tags do %>
+  <%# stylesheet_link_tag 'redmine_harvest_smc', :plugin => 'redmine_harvest_smc' %>
+
+  <script type="text/javascript">
+    $(function() {
+        var settingz = $('#rm_smc_settings');
+        var i = $('#rm_smc_settings tr').size() + 1;
+        
+        $('#addSetting').click( function() {
+                $('<tr><td><input type="text" id="rm_smc_setting" size="25" name="new_settings[redmine_harvest_smc_notes_string' + i +']" value="" placeholder="HARVEST NOTES STRING" /></td><td>→</td><td><input type="text" id="rm_smc_setting_redmine_issue" size="16" name="new_settings[redmine_harvest_smc_redmine_issue' + i +']" value="" placeholder="REDMINE ISSUE ID" /><a href="#" id="rmSetting">X</a></td></tr>').appendTo(settingz);
+                i++;
+                return false;
+        });
+        
+        $('#rmSetting').live('click', function() { 
+          $(this).parents('tr').remove();
+          i--;
+
+          return false;
+        });
+});
+
+  </script>
+    
+<% end %>
+
+<h3><%= l(:rm_smc_settings) %> </h3>
+<em class="info"><%= l(:rm_smc_settings_info) %></em>
+<br />
+
+<%= form_for :harvest_settings, :url =>{:action=>"harvest_settings"} do | f | -%> 
+<table id="rm_smc_settings">
+  <thead>
+    <tr>
+      <td><%= l(:rm_smc_regex) %></td>
+      <td><%= l(:rm_smc_applies_to) %></td>
+      <td><%= l(:rm_smc_rm_issue) %></td>
+    </tr>
+  </thead>
+
+  <% @harvest_settings.each do |setting| %>
+  <tr>
+    <td>
+      <%# create key names in the settings hash that include the project_id so we can create form fields and reference them later. %>
+      <%= setting.notes_string %>
+      <%# text_field_tag "settings[redmine_harvest_smc_applies_to_rm_issue]", setting.notes_string] %>
+    </td>
+    <td>
+      →
+    </td>
+    <td>
+      <%# #TODO: link_to %>
+      <a href="/issues/<%= setting.redmine_issue %>" title="LINK TO ISSUE <%= setting.redmine_issue %>"><%= setting.redmine_issue %></a>
+      <%# text_field_tag "settings[redmine_harvest_smc_applies_to_rm_issue]", setting.redmine_issue] %>
+
+      <%= link_to "Delete", harvest_settings_delete_path(setting.id) , :method => :delete, :confirm => "Are you sure?"%>
+    </td>
+    
+  </tr>
+  <% end %>
+
+  <tr>
+    <td>
+      <%= text_field_tag "new_settings[redmine_harvest_smc_notes_string]", nil, :placeholder => "HARVEST NOTES STRING", :size => 25 %>
+    </td>
+    <td>
+      →
+    </td>
+    <td>
+    	<%= text_field_tag "new_settings[redmine_harvest_smc_redmine_issue]", nil, :placeholder => "REDMINE ISSUE ID", :size => 16 %>
+    </td>
+      
+  </tr>
+
+
+
+  <tfoot>
+    <tr>
+      <td><i><a href="#" id="addSetting">Add Another</a></i></td>
+    </tr>
+  </tfoot>
+</table>
+
+<%= f.submit %>
+<% end #form_for %>

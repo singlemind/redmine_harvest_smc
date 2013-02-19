@@ -10,7 +10,7 @@
     <%= javascript_include_tag "lib/jquery-dataTables.columnFilter.js", :plugin => "redmine_harvest_smc" %>
     <%= javascript_include_tag "lib/jquery-dataTables.colVis.js", :plugin => "redmine_harvest_smc" %>
     <%= javascript_include_tag "lib/jquery-cookies.min.js", :plugin => "redmine_harvest_smc" %>
-    <%= javascript_include_tag "lib/jquery-select-shift-key-listener.js", :plugin => "redmine_harvest_smc" %>
+   
 
     <%= javascript_include_tag "redmine_harvest_smc.js", :plugin => "redmine_harvest_smc" %>
     <style>
@@ -18,6 +18,41 @@
 
     </style>
   <script>
+  //sortof a gnarly prototype. good fodder for refactor.
+  Date.prototype.getDOY = function() {
+    var d = new Date(this.getFullYear(),0,1);
+    return Math.ceil((this - d) / 86400000);
+  }
+
+  $(function() {
+    $( "#rm_smc_from" ).datepicker({
+      defaultDate: "today",
+      maxDate: '+0d',
+      minDate: '-1y',
+      dateFormat: 'o',
+      changeMonth: true,
+      changeYear: true,
+      numberOfMonths: 1,
+      onClose: function( selectedDate ) {
+        $( "#rm_smc_to" ).datepicker( "option", "minDate", selectedDate );
+      }
+    });
+    $( "#rm_smc_to" ).datepicker({
+      defaultDate: "today",
+      maxDate: '+0d',
+      minDate: '-1y',
+      dateFormat: 'o',
+      changeMonth: true,
+      changeYear: true,
+      numberOfMonths: 1,
+      onClose: function( selectedDate ) {
+        $( "#rm_smc_from" ).datepicker( "option", "maxDate", selectedDate );
+      }
+    });
+  });
+
+
+
   $(function() {
     $( "#rerun" )
       .button({
@@ -56,52 +91,99 @@
         return false;
     });
   });
+
+  $(function() {
+
+    $('#rm_smc_sync_dates').click( function(e){
+        if ( $( "#rm_smc_from" ).val()=="") {
+          $( "#rm_smc_from" ).effect("highlight", {color: 'red'}, 3000);
+          return false;
+        } else if ($( "#rm_smc_to" ).val() == "") {
+          $( "#rm_smc_to" ).effect("highlight", {color: 'red'}, 3000);
+          return false;
+        } else {
+          $('#harvest_entry_rm_smc_checbox_action').val('sync_dates');
+          $('form').submit();
+          return false;
+        }
+        
+
+    });
+
+    $('#rm_smc_reconcile').click( function(e){
+        e.preventDefault();
+        window.location = $(this).attr('href');
+    });
+
+
+    $('#rm_smc_reset_filterz').click( function(e){
+        e.preventDefault();
+        $.cookie('SpryMedia_DataTables_redmine_harvest_smc_table_harvest', null, { path: '/' });
+        //$.removeCookie("SpryMedia_DataTables_redmine_harvest_smc_table_");
+        window.location.reload(true);
+    });
+  });  
+
+
   </script>
 
 <% end %>
 
-<%= form_for :harvest_entry, :url =>{:action=>"checkbox_action"} do | f | -%>
-    <% unless @did_fetch_new_entries %>
-            <button id="rm_smc_fetch_today" href="<%= harvest_fetch_today_path %>" onclick="return false;" >Fetch Today</button>
-        <% end %>
-            <a id="rm_smc_fetch_week" href="<%= harvest_fetch_week_path %>">Fetch Past Week</a>
-            <button id="rm_smc_reset_filterz" href="<%= harvest_path %>" >Reset Filters</button>
+<%= form_for :harvest_entry, :url =>{:action=>"reconcile"} do | f | -%>
+    <fieldset id="rm_smc_filters" class="collapsible ">
+        <legend onclick="toggleFieldset(this);">Filters</legend>
+        <div>
+            <span>&nbsp;</span>
+            <span id="statusFilter">Status</span>
+            <span id="rmDateFilter">Date</span>
+            <span id="rmUserFilter">RM User</span>
+            <span id="rmIssueFilter">RM Issue</span>
+            <span id="clientFilter">Client</span>
+            <span id="taskFilter">Task</span>
+            <span id="hoursFilter">Hours</span>
+            <span id="notesFilter">Notes</span>
+            <button id="rm_smc_reset_filterz" href="<%= harvest_path %>" ><%= t :rm_smc_reset_filters %></button>
+
+        </div>
+    </fieldset>
+
+    <fieldset id="rm_smc_options" class="collapsible">
+        <legend onclick="toggleFieldset(this);">Options</legend>
+        <div>
+            <label for="from"><%= t :rm_smc_from %></label>
+            <input type="text" id="rm_smc_from" name="harvest_entry[from]" />
+            <label for="to"><%= t :rm_smc_to %></label>
+            <input type="text" id="rm_smc_to" name="harvest_entry[to]" />
+            <button id="rm_smc_sync_dates" href="#" ><%= t :rm_smc_sync_dates %></button>
+            <br />
+          
+        </div>
+    </fieldset>
+          
 
             <!-- harvest_sync_status_new.path harvest_sync_status.path -->
+<button id="rm_smc_reconcile" href="<%= harvest_reconcile_path %>"><%= t :rm_smc_sync %></button>
 <table cellpadding="0" cellspacing="0" border="0" class="display" id="redmine_harvest_smc_table">
     <thead>
 
         <tr>
-            
-            <td>
-                <input type="checkbox" name="foo" value="bar" id="rm_smc_checkall" title="<%= t :rm_smc_checkall %>">
-                <div id="rm_smc_controlz">
-                    <div><button id="rerun"></button></div>
-                      <ul>
-                        <li><a href="#" id="rm_smc_sync"><%= t :rm_smc_sync %></a></li>
-                        <li><a href="#" id="rm_smc_destroy"><%= t :rm_smc_destroy %></a></li>
-                      </ul>  
-                </div>
-            </td>
 
-            
             <td title="permalink to Harvest">H</td>
-            <td id="statusFilter"><span>Status</span></td>
-            <td id="rmDateFilter"><span>Date</span></td>
-            <td id="rmUserFilter"><span>RM User</span></td>
-            <td id="rmIssueFilter"><span>RM Issue</span></td>
-            <td id="clientFilter"><span>Client</span></td>
-            <td id="taskFilter"><span>Task</span></td>
-            <td id="hoursFilter"><span>Hours</span></td>
-            <td id="notesFilter"><span>Notes</span></td>
+            <td><span>Status</span></td>
+            <td><span>Date</span></td>
+            <td><span>RM User</span></td>
+            <td><span>RM Issue</span></td>
+            <td><span>Client</span></td>
+            <td><span>Task</span></td>
+            <td><span>Hours</span></td>
+            <td><span>Notes</span></td>
             
         </tr>
     </thead>
     <tfoot class="hidden" style="visibility:hidden;">
         <tr>
-            <td></td>
 
-            <td>&nbsp;</td>
+            <td>&nbsp;</td>    
             <td>status</td>
             <td>date</td>
             <td>RM user</td>
@@ -109,14 +191,14 @@
             <td>client</td>
             <td>task</td>
             <td>hours</td>
-            <td>notes</td>        
+            <td>notes</td> 
+               
+
         </tr>
     </tfoot>
     <tbody>
             <% @harvest_entries.each do |entry| %>
             <tr>
-                <td><input type="checkbox" name="harvest_entries[]" value="<%=entry.id%>" class="chkbx_shft_lstnr" /></td>
-
 
                 <td><a href="https://singlemind.harvestapp.com/time/day/<%= Date.strptime(entry.spent_at, '%Y-%m-%d').strftime('%Y/%m/%d') %>" title="link to harvest" class="entry_link_to_harvest">⃔</a></td>
                 <td><%= entry.status %></td>
@@ -133,11 +215,21 @@
                 </td>
                 <td><%= entry.client %></td>
                 <td><%= entry.task %></td>
-                <td><%= entry.hours %></td>
+                
+                <td><% if entry.redmine_time_entry_id %>
+                    <a href="/time_entries/<%= entry.redmine_time_entry_id %>/edit/" title="link to time entry" >
+                        <%= entry.hours %>
+                    </a>
+                    <% else %>
+                        <%= entry.hours %>
+                    <% end %>
+                </td>
                 <td><%= entry.notes %></td>   
             </tr>
             <% end %>
     </tbody>
 </table>
+<br />
+
 <%= f.hidden_field :rm_smc_checbox_action, :value => "no" %>
 <% end #form -%>

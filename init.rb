@@ -47,4 +47,11 @@ Redmine::Plugin.register :redmine_harvest_smc do
        :require => :loggedin,
        :if => Proc.new { User.current.logged? })
 
+  menu(:top_menu,
+     :rm_smc_menu_settings_caption,
+     {:controller => 'harvest_entry', :action => 'harvest_settings'},
+     :caption => :redmine_harvest_smc_settings,
+     :require => :loggedin,
+     :if => Proc.new { User.current.logged? })
+
 end

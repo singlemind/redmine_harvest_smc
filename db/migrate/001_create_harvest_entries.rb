@@ -3,6 +3,7 @@ class CreateHarvestEntries < ActiveRecord::Migration
     create_table :harvest_entries do |t|
       t.integer :redmine_user_id
       t.string :redmine_name
+      t.integer :redmine_time_entry_id
       t.integer :redmine_issue_id
       t.integer :harvest_id
       #this should probably be a .datetime
