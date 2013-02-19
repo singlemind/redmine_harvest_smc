@@ -300,17 +300,17 @@ class HarvestEntry < ActiveRecord::Base
 
       redmine_day = HarvestEntry.of(redmine_user_id).for_year_and_day(year, day_of_the_year)
       harvest_sync.redmine_day_total_issues = redmine_day.count
-      harvest_sync.redmine_day_total_time = redmine_day.collect{|h| h.hours.to_f}.sum.round(1)
+      harvest_sync.redmine_day_total_time = redmine_day.collect{|h| h.hours.to_f}.sum.round(2)
 
 
       
       
       total_entries_diff = harvest_sync.harvest_day_total_entries == harvest_sync.redmine_day_total_issues
-      total_time_diff = harvest_sync.harvest_day_total_time.round(1) == harvest_sync.redmine_day_total_time
+      total_time_diff = harvest_sync.harvest_day_total_time.round(2) == harvest_sync.redmine_day_total_time
 
       logger.info "YEAR: #{year}, DAY_OF_THE_YEAR: #{day_of_the_year}, TOTAL_ENTRIES_DIFF: #{total_entries_diff}, TOTAL_TIME_DIFF: #{total_time_diff}"
       logger.info "HARVEST_DAY_TOTAL_ENTRIES: #{harvest_sync.harvest_day_total_entries}, REDMINE_DAY_TOTAL_ISSUES: #{harvest_sync.redmine_day_total_issues}"
-      logger.info "HARVEST_DAY_TOTAL_TIME: #{harvest_sync.harvest_day_total_time.round(1)}, REDMINE_DAY_TOTAL_TIME: #{harvest_sync.redmine_day_total_time}"
+      logger.info "HARVEST_DAY_TOTAL_TIME: #{harvest_sync.harvest_day_total_time.round(2)}, REDMINE_DAY_TOTAL_TIME: #{harvest_sync.redmine_day_total_time}"
 
       
 
