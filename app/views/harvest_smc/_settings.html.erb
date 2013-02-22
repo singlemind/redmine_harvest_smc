@@ -12,7 +12,42 @@
   projects=Project.find(:all, :conditions => { :parent_id => nil })
   allProjects = Project.find(:all)
   #a simple array to hold all the sub project ids that the user defined
-  @settings[:harvest_smc_projects] = Array.new
+  #@settings[:harvest_smc_projects] = Array.new
 
+  #Setting.plugin_redmine_harvest_smc['foo']
+%>
+<%  
+  projects=Project.find(:all, :conditions => { :parent_id => nil })
+  allProjects = Project.find(:all)
+  #a simple array to hold all the sub project ids that the user defined
+  @settings[:redmine_harvest_smc_projects] = Array.new
+  #TODO: this iVar currently unused
+  @settings[:custom_fields] = Array.new
+  
+  custom_fields = CustomField.find(:all, :conditions => ["field_format = ? OR field_format = ?", 'int', 'float'])
+  all_custom_fields = CustomField.find(:all)
+  #TODO: this each loop currently unused
+  #custom_fields.each do |field|
+  #  @settings[:custom_fields] << { :id => field.id, :name => field.name }
+  #end
 %>
 
+
+
+<p>  
+  <h3>Header</h3>
+    <em class="info"><%= l(:redmine_harvest_smc_default_subject_info) %></em>
+  <label><%= l(:field_subject) %></label>
+  <%= text_field_tag "settings[redmine_harvest_smc_subject]", @settings[:redmine_harvest_smc_subject] %>
+</p>
+
+<table>
+  <tbody>
+    <tr>
+      <th>FOO</th>
+      <td><input type="text" id="settings_foo" 
+                     value="<%= settings['foo'] %>" 
+             name="settings[foo]" >
+    </tr>
+  </tbody>
+</table>

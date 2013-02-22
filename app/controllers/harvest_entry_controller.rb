@@ -213,24 +213,32 @@ class HarvestEntryController < ApplicationController
 
       from = params[:harvest_entry][:from]
       to = params[:harvest_entry][:to]
-      myFlashNotice = HarvestEntry.fetch_entries_from_to(User.current.id, from, to)
+      #myFlashNotice = HarvestEntry.fetch_entries_from_to(User.current.id, from, to)
       
-      begin
-        unless myFlashNotice.empty?
-          flash[:error] = myFlashNotice.to_s 
+      # begin
+      #   unless myFlashNotice.empty?
+      #     flash[:error] = myFlashNotice.to_s 
+      #   end
+      # rescue 
+      #   @did_fetch_new_entries = false
+      #   flash[:error] = l :rm_smc_please_setup_harvest_user
+      # end
+
+      #legacy?
+      @did_fetch_new_entries = false
+
+      if params[:harvest_entry]["rm_smc_validate_force"] == 'on'
+        logger.info "------------- VALIDATING ENTRIES USING [[FORCE]] MUHAHA!"
+        for i in from..to do 
+          #(redmine_user_id, day_of_the_year = Time.now.yday, year = Time.now.year, force_validate = false)
+          # TODO: pass the year as a param from the javascript selector!
+          HarvestEntry.validate_entries_for(User.current.id, i, Time.now.year, true)
         end
-      rescue 
-        @did_fetch_new_entries = false
-        flash[:error] = l :rm_smc_please_setup_harvest_user
-      end
-
-
-      if params[:harvest_entry]["rm_smc_checbox_action"] == 'validate'
+      elsif params[:harvest_entry]["rm_smc_checbox_action"] == 'validate'
         for i in from..to do 
           logger.info "------------- VALIDATING ENTRIES!"
           HarvestEntry.validate_entries_for(User.current.id, i)
         end
-        
       end
       redirect_to :action => "index"
       return

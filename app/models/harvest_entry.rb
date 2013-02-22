@@ -263,7 +263,7 @@ class HarvestEntry < ActiveRecord::Base
   end
 
   #TODO: method that validates all entries in Redmine still exist in Harvest
-  def self.validate_entries_for(redmine_user_id, day_of_the_year = Time.now.yday, year = Time.now.year)
+  def self.validate_entries_for(redmine_user_id, day_of_the_year = Time.now.yday, year = Time.now.year, force_validate = false)
 
 
     error_string = ""
@@ -280,7 +280,7 @@ class HarvestEntry < ActiveRecord::Base
     harvest = HarvestClient.new(harvest_user.decrypt_username,harvest_user.decrypt_password)
 
     begin 
-
+      logger.info "CALLING HARVEST API  /daily/#{day_of_the_year}/#{year}"
       response = harvest.request "/daily/#{day_of_the_year}/#{year}", :get
       #logger.info  response.body
       xml_doc = Nokogiri::XML(response.body)
@@ -313,8 +313,8 @@ class HarvestEntry < ActiveRecord::Base
       logger.info "HARVEST_DAY_TOTAL_TIME: #{harvest_sync.harvest_day_total_time.round(2)}, REDMINE_DAY_TOTAL_TIME: #{harvest_sync.redmine_day_total_time}"
 
       
-
-      if !total_entries_diff or !total_time_diff 
+      logger.info 
+      if !total_entries_diff or !total_time_diff or force_validate
         harvest_sync.status = 'problem'
         harvest_sync.save!
         # is there a problem? drop & fetch day. (ACCOUNT FOR TimeEntries!)
@@ -363,10 +363,10 @@ class HarvestEntry < ActiveRecord::Base
         #update_rm_id_for_all_entries
         #set_time_for_all_entries
 
-      end
+      end #if _diff and whatnot
     
 
-      #PHEW! we just got through a lot, mmm, does that feel good?
+      #PHEW! we just got through a lot, mmm... 
 
     rescue Exception => e
       # error_string is a attr_accessor 

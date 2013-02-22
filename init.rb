@@ -14,7 +14,7 @@ Redmine::Plugin.register :redmine_harvest_smc do
   requires_redmine :version_or_higher => '1.3.0'
   
   settings :default => {
-    :foo => false
+    :foo => "foobaz"
   }, :partial => 'harvest_smc/settings'
 
   Redmine::AccessControl.map do |map|

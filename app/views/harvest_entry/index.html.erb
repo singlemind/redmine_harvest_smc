@@ -168,8 +168,10 @@
             <input type="text" id="rm_smc_from" name="harvest_entry[from]" />
             <label for="to"><%= t :rm_smc_to %></label>
             <input type="text" id="rm_smc_to" name="harvest_entry[to]" />
-            <button id="rm_smc_sync_dates" href="#" ><%= t :rm_smc_sync_dates %></button>
-            <button id="rm_smc_validate" href="#" ><%= t :rm_smc_validate %>
+            <!--button id="rm_smc_sync_dates" href="#" ><%# t :rm_smc_sync_dates %></button-->
+            <button id="rm_smc_validate" href="#" ><%= t :rm_smc_validate %> </button>
+            <label for="rm_smc_validate_force"><%= t :rm_smc_force %></label>
+            <input type="checkbox" id="rm_smc_validate_force" name="harvest_entry[rm_smc_validate_force]" />
             <br />
         </div>
     </fieldset>
