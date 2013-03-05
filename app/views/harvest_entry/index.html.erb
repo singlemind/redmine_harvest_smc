@@ -5,6 +5,7 @@
     <%= stylesheet_link_tag "demo_page.css", :plugin => "redmine_harvest_smc", :media => "screen" %>
     <%= stylesheet_link_tag "demo_table.css", :plugin => "redmine_harvest_smc", :media => "screen" %>
     <%= stylesheet_link_tag "jquery-dataTables-ColVis.css", :plugin => "redmine_harvest_smc", :media => "screen" %>
+    <%= stylesheet_link_tag "font-awesome.min.css", :plugin => "redmine_harvest_smc", :media => "screen" %>
 
     <%= javascript_include_tag "lib/jquery-dataTables.js", :plugin => "redmine_harvest_smc" %>
     <%= javascript_include_tag "lib/jquery-dataTables.columnFilter.js", :plugin => "redmine_harvest_smc" %>
@@ -15,7 +16,8 @@
     <%= javascript_include_tag "redmine_harvest_smc.js", :plugin => "redmine_harvest_smc" %>
     <style>
     .ui-menu { position: fixed; }
-
+    .unmatched_rm_issue { color: #666;}
+    .hightlightedRow { color: #FF0000!important;}
     </style>
   <script>
   //sortof a gnarly prototype. good fodder for refactor.
@@ -138,6 +140,11 @@
     });
   });  
 
+  $(function() {
+    $( document ).tooltip({
+      track: true
+    });
+  });
 
   </script>
 
@@ -169,7 +176,7 @@
             <label for="to"><%= t :rm_smc_to %></label>
             <input type="text" id="rm_smc_to" name="harvest_entry[to]" />
             <!--button id="rm_smc_sync_dates" href="#" ><%# t :rm_smc_sync_dates %></button-->
-            <button id="rm_smc_validate" href="#" ><%= t :rm_smc_validate %> </button>
+            <button id="rm_smc_validate" href="#" ><%= t :rm_smc_sync %> <i class="icon-refresh"></i></button>
             <label for="rm_smc_validate_force"><%= t :rm_smc_force %></label>
             <input type="checkbox" id="rm_smc_validate_force" name="harvest_entry[rm_smc_validate_force]" />
             <br />
@@ -178,13 +185,14 @@
           
 
             <!-- harvest_sync_status_new.path harvest_sync_status.path -->
-<button id="rm_smc_reconcile" href="<%= harvest_reconcile_path %>"><%= t :rm_smc_sync %></button>
+<!--button id="rm_smc_reconcile" href="<%= harvest_reconcile_path %>"><%# t :rm_smc_sync %></button-->
+
 <table cellpadding="0" cellspacing="0" border="0" class="display" id="redmine_harvest_smc_table">
     <thead>
 
         <tr>
 
-            <td title="permalink to Harvest">H</td>
+            <td title="permalink to Harvest"><%= image_tag 'harvest-logo-icon-25px.png', :plugin => 'redmine_harvest_smc' %></td>
             <td><span>Status</span></td>
             <td><span>Date</span></td>
             <td><span>RM User</span></td>
@@ -215,29 +223,37 @@
     <tbody>
             <% @harvest_entries.each do |entry| %>
             <tr>
-
-                <td><a href="https://singlemind.harvestapp.com/time/day/<%= Date.strptime(entry.spent_at, '%Y-%m-%d').strftime('%Y/%m/%d') %>" title="link to harvest" class="entry_link_to_harvest">⃔</a></td>
-                <td><%= entry.status %></td>
+                <% day = Date.strptime(entry.spent_at, '%Y-%m-%d').strftime('%Y/%m/%d') %>
+                <td><a href="https://singlemind.harvestapp.com/time/day/<%= day %>" title="Harvest link to <%= day %>" class="entry_link_to_harvest">⃔</a></td>
+                <td>
+                  <% if entry.status == 'problem' %>
+                    <b class="hightlightedRow" title="<%= entry.status_info %>"><%= entry.status %></b>
+                  <% else %>
+                    <%= entry.status %>
+                  <% end %>
+                  
+                </td>
                 <td><%= Date.strptime(entry.spent_at, '%Y-%m-%d').strftime('%m/%d/%Y') %></td>
                 <td><%= entry.redmine_name %></td>
                 <td>
                     <% if entry.redmine_issue_id and !entry.status.scan(/matched|complete|locked/).empty? %>
-                    <a href="/issues/<%= entry.redmine_issue_id %>" title="link to issue" >
+                    <a href="/issues/<%= entry.redmine_issue_id %>" title="<%= Issue.find_by_id(entry.redmine_issue_id).subject %>" >
                         <%= entry.redmine_issue_id %>
                     </a>
                     <% else %>
-                        <%= entry.redmine_issue_id %>
+                        <del class="unmatched_rm_issue"><%= entry.redmine_issue_id %></del>
                     <% end %>
                 </td>
                 <td><%= entry.client %></td>
                 <td><%= entry.task %></td>
                 
                 <td><% if entry.redmine_time_entry_id %>
-                    <a href="/time_entries/<%= entry.redmine_time_entry_id %>/edit/" title="link to time entry" >
+                  <% te = TimeEntry.find_by_id(entry.redmine_time_entry_id) %>
+                    <a href="/time_entries/<%= entry.redmine_time_entry_id %>/edit/" title="<%= te.activity te.comments %>-- <%= te.comments %>" >
                         <%= entry.hours %>
                     </a>
                     <% else %>
-                        <%= entry.hours %>
+                        <del><%= entry.hours %></del>
                     <% end %>
                 </td>
                 <td><%= entry.notes %></td>   

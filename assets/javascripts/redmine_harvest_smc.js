@@ -11,7 +11,16 @@ $(document).ready(function() {
 
 		, "aaSorting": [[ 1, "desc" ]]
 		, "bAutoWidth": true
-		, "aoColumnDefs": 
+		, "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
+            
+            if ( aData[1] == "problem" )
+            {
+                $('td:eq(1)', nRow).html( '<b title="PROBLEM">PROBLEM</b>' );
+                $( 'td:eq(1)', nRow ).addClass("hightlightedRow");
+            }
+        }
+
+    , "aoColumnDefs": 
 		[
 				{ "sWidth": "55px", "aTargets": [ 0 ] }
 			, { "bSortable": false, "aTargets": [ 0 ] }

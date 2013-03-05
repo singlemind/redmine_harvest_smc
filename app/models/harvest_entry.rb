@@ -3,11 +3,16 @@ class HarvestEntry < ActiveRecord::Base
   
   STATUS_STRINGS = [ 'new', 'problem', 'matched', 'unmatched', 'flagged', 'reconciled', 'locked' ]
   DESTROYED_STATUS = 'destroyed'
-  DEFAULT_STATUS = 'new'
   VALIDATION_STATUS = 'validation'
-  MATCHED_STATUS = 'matched'
-  PROBLEM_STATUS = 'problem'
-  
+  DEFAULT_STATUS = STATUS_STRINGS[0]
+  PROBLEM_STATUS = STATUS_STRINGS[1]
+  MATCHED_STATUS = STATUS_STRINGS[2] 
+  ERROR_INFO_STRINGS = [
+    '4-digit issue found in Harvest Entry notes but did not match Redmine issue.', 
+    'No 4-digit issue found in Harvest Entry notes.',
+    'Could not find a Redmine Time Entry to destroy.'
+  ]
+
   attr_accessor :error_string
 
   before_save :set_updated_at
@@ -171,9 +176,9 @@ class HarvestEntry < ActiveRecord::Base
 
         entry.status = "complete"
         entry.redmine_time_entry_id = te.id
-
       else 
         entry.status = "problem"
+        entry.status_info = ERROR_INFO_STRINGS[1]
       end  
       entry.save!
       
@@ -192,9 +197,11 @@ class HarvestEntry < ActiveRecord::Base
         e.status = 'matched'
         unless Issue.find_by_id(redmine_issue_id[0].to_i)
           e.status = 'problem'
+          e.status_info = ERROR_INFO_STRINGS[0]
         end
       else 
         #TODO: internal status?
+        e.status_info = ERROR_INFO_STRINGS[1]
         e.status = 'problem'
       end
       e.save!
@@ -211,10 +218,12 @@ class HarvestEntry < ActiveRecord::Base
         e.redmine_issue_id = redmine_issue_id[0].to_i
         e.status = 'matched'
         unless Issue.find_by_id(redmine_issue_id[0].to_i)
+          e.status_info = ERROR_INFO_STRINGS[0]
           e.status = 'problem'
         end
       else 
         #TODO: internal status?
+        e.status_info = ERROR_INFO_STRINGS[1]
         e.status = 'problem'
       end
       e.save!
@@ -249,6 +258,7 @@ class HarvestEntry < ActiveRecord::Base
           e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)
         else 
           #if there is already a redmine_issue_id, should not set the status to problem.
+          #TODO: status_info
           e.status = 'problem' if e.redmine_issue_id.blank?
         end
         e.save!
@@ -284,7 +294,6 @@ class HarvestEntry < ActiveRecord::Base
       response = harvest.request "/daily/#{day_of_the_year}/#{year}", :get
       #logger.info  response.body
       xml_doc = Nokogiri::XML(response.body)
-
     
 
       harvest_sync = HarvestSync.new
@@ -302,8 +311,6 @@ class HarvestEntry < ActiveRecord::Base
       harvest_sync.redmine_day_total_issues = redmine_day.count
       harvest_sync.redmine_day_total_time = redmine_day.collect{|h| h.hours.to_f}.sum.round(2)
 
-
-      
       
       total_entries_diff = harvest_sync.harvest_day_total_entries == harvest_sync.redmine_day_total_issues
       total_time_diff = harvest_sync.harvest_day_total_time.round(2) == harvest_sync.redmine_day_total_time
@@ -316,6 +323,7 @@ class HarvestEntry < ActiveRecord::Base
       logger.info 
       if !total_entries_diff or !total_time_diff or force_validate
         harvest_sync.status = 'problem'
+        #TODO: status_info?
         harvest_sync.save!
         # is there a problem? drop & fetch day. (ACCOUNT FOR TimeEntries!)
 
@@ -385,6 +393,7 @@ class HarvestEntry < ActiveRecord::Base
           TimeEntry.find(entry.redmine_time_entry_id).destroy
         rescue Exception => e
           logger.error "CAUGHT EXCEPTION: #{e}"
+          entry.status_info = ERROR_INFO_STRINGS[2]
         end
       end #unless
       
