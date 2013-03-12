@@ -55,7 +55,7 @@ class HarvestEntry < ActiveRecord::Base
       error_string << "NO USER SET"
       return 
     end
-    harvest = HarvestClient.new(harvest_user.decrypt_username,harvest_user.decrypt_password)
+    harvest = HarvestClient.new(harvest_user.decrypt_username,harvest_user.decrypt_password, Setting["plugin_redmine_harvest_smc"]["harvest_subdomain"])
 
     begin 
 
@@ -237,7 +237,7 @@ class HarvestEntry < ActiveRecord::Base
 
 
     entry = HarvestEntry.where(:status => status, :redmine_user_id => userID ).each do |e|
-      harvest_settings = HarvestSettings.of userID
+      harvest_settings = HarvestSettings.all
       
       harvest_settings.each do |setting|
         if e.notes =~ /#{Regexp.escape(setting.notes_string)}/
@@ -287,7 +287,7 @@ class HarvestEntry < ActiveRecord::Base
       error_string << "NO USER SET"
       return 
     end
-    harvest = HarvestClient.new(harvest_user.decrypt_username,harvest_user.decrypt_password)
+    harvest = HarvestClient.new(harvest_user.decrypt_username,harvest_user.decrypt_password, Setting["plugin_redmine_harvest_smc"]["harvest_subdomain"])
 
     begin 
       logger.info "CALLING HARVEST API  /daily/#{day_of_the_year}/#{year}"

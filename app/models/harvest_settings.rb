@@ -10,9 +10,9 @@ class HarvestSettings < ActiveRecord::Base
 
   default_scope :conditions => [ 'status != "destroyed"' ]
 
-  scope :of, lambda { |userID|
-    where :redmine_user_id => userID
-  } 
+  # scope :of, lambda { |userID|
+  #   where :redmine_user_id => userID
+  # } 
 
   def set_updated_at
     self.updated_at = Time.now

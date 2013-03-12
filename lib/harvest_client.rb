@@ -4,7 +4,7 @@
 # adapted from example on github: https://github.com/harvesthq/harvest_api_samples/blob/master/harvest_api_sample.rb
 #
 # i.e. subdomain.harvestapp.com
-SUBDOMAIN = 'singlemind'
+#SUBDOMAIN = 'singlemindtest'
 
 # Your application should send an unique User Agent value out of
 # politeness.
@@ -30,10 +30,10 @@ require 'nokogiri'
 
 class HarvestClient
 
-  def initialize (username, password)
+  def initialize (username, password, subdomain)
     @username = username
     @password = password
-    @company = SUBDOMAIN
+    @company = subdomain
     @preferred_protocols = [HAS_SSL, ! HAS_SSL]
     connect!
   end

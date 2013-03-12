@@ -1,53 +1,48 @@
-<% content_for :header_tags do %>
-  <%# stylesheet_link_tag 'harvest_smc', :plugin => 'redmine_harvest_smc' %>
-  <%= javascript_include_tag 'https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js' %>
-  <script type="text/javascript">
-    //since redMine is a notorious user of prototype.js...
-    jQuery.noConflict();
-  </script>
-    
-<% end %>
+<% 
 
-<%  
-  projects=Project.find(:all, :conditions => { :parent_id => nil })
-  allProjects = Project.find(:all)
-  #a simple array to hold all the sub project ids that the user defined
-  #@settings[:harvest_smc_projects] = Array.new
+  @rm_smc_all_users = HarvestUser.all
+  @rm_smc_total_users =  @rm_smc_all_users.count
+  @rm_smc_total_syncs = HarvestSync.all.count
+  @rm_smc_all_entries = HarvestSync.all
+  @rm_smc_total_entries = @rm_smc_all_entries.count
 
-  #Setting.plugin_redmine_harvest_smc['foo']
-%>
-<%  
-  projects=Project.find(:all, :conditions => { :parent_id => nil })
-  allProjects = Project.find(:all)
-  #a simple array to hold all the sub project ids that the user defined
-  @settings[:redmine_harvest_smc_projects] = Array.new
-  #TODO: this iVar currently unused
-  @settings[:custom_fields] = Array.new
-  
-  custom_fields = CustomField.find(:all, :conditions => ["field_format = ? OR field_format = ?", 'int', 'float'])
-  all_custom_fields = CustomField.find(:all)
-  #TODO: this each loop currently unused
-  #custom_fields.each do |field|
-  #  @settings[:custom_fields] << { :id => field.id, :name => field.name }
-  #end
+  @rm_smc_total_destoryed = HarvestEntry.unscoped.status('destroyed').count
 %>
 
-
-
-<p>  
-  <h3>Header</h3>
-    <em class="info"><%= l(:redmine_harvest_smc_default_subject_info) %></em>
-  <label><%= l(:field_subject) %></label>
-  <%= text_field_tag "settings[redmine_harvest_smc_subject]", @settings[:redmine_harvest_smc_subject] %>
+<p>
+  <label><%= l(:rm_smc_subdomain) %></label>
+  <%= text_field_tag "settings[harvest_subdomain]", @settings[:harvest_subdomain], :size => 40 %>
+  <em class="info">http://<b><i>subdomain</i></b>.harvestapp.com/</em>
 </p>
+<p>
+  <label><%= l(:rm_smc_totals) %></label>
+  <br />
+  <label><%= l(:rm_smc_total_syncs) %></label>
+  <%= @rm_smc_total_syncs %>
+  <br />
+  <label><%= l(:rm_smc_total_entries) %></label>
+  <%= @rm_smc_total_entries %>
+  <br />
+  <label><%= l(:rm_smc_total_destroyed) %></label>
+  <%= @rm_smc_total_destoryed %>
+  <br />
+  <label><%= l(:rm_smc_total_users) %></label>
+  <%= @rm_smc_total_users %>
+  <br />
+  <br />
+  
+  <% @rm_smc_all_users.each do |user| %>
 
-<table>
-  <tbody>
-    <tr>
-      <th>FOO</th>
-      <td><input type="text" id="settings_foo" 
-                     value="<%= settings['foo'] %>" 
-             name="settings[foo]" >
-    </tr>
-  </tbody>
-</table>
+    <label><%= l(:rm_smc_harvest) %></label>
+    <%= user.decrypt_username %>
+    <br />
+    <label><%= l(:rm_smc_redmine) %></label>
+    <%= User.find_by_id(user.redmine_user_id).name %>
+    <br />
+    <label><%= l(:rm_smc_totals) %> <%= l(:rm_smc_total_entries) %></label>
+    <%= HarvestEntry.of(user.redmine_user_id).count %>
+    <br />
+
+    <br />
+  <% end %>
+</p>

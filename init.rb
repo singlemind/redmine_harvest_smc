@@ -52,6 +52,6 @@ Redmine::Plugin.register :redmine_harvest_smc do
      {:controller => 'harvest_entry', :action => 'harvest_settings'},
      :caption => :redmine_harvest_smc_settings,
      :require => :loggedin,
-     :if => Proc.new { User.current.logged? })
+     :if => Proc.new { User.current.logged? and User.current.admin? })
 
 end

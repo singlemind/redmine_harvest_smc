@@ -22,8 +22,11 @@ class HarvestEntryController < ApplicationController
       else 
         @harvest_entries = HarvestEntry.of(User.current.id).status(params[:status].to_s).order(:status => :desc)
       end
-      
+    elsif User.current.admin? 
+        logger.info "~~~~~~~~~~~~~ HARVEST ENTRY GETTING ALL FOR ADMIN!"
+        @harvest_entries = HarvestEntry.all
     else 
+      logger.info "~~~~~~~~~~~~~ HARVEST ENTRY ELSE REG USER!"
       @harvest_entries = HarvestEntry.of(User.current.id).order(:status => :desc)
     end
 
@@ -57,27 +60,26 @@ class HarvestEntryController < ApplicationController
 
   def harvest_settings
 
-    @harvest_settings = HarvestSettings.of User.current.id
+    @harvest_settings = HarvestSettings.all
     uniq_for_settings = []
-    uniq_for_settings << HarvestEntry.of(User.current.id).uniq_project.collect{|p| p.project}
-    uniq_for_settings << HarvestEntry.of(User.current.id).uniq_client.collect{|c| c.client}
-    uniq_for_settings << HarvestEntry.of(User.current.id).uniq_task.collect{|t| t.task}
+    uniq_for_settings << HarvestEntry.uniq_project.collect{|p| p.project}
+    uniq_for_settings << HarvestEntry.uniq_client.collect{|c| c.client}
+    uniq_for_settings << HarvestEntry.uniq_task.collect{|t| t.task}
 
     @uniq_for_settings = uniq_for_settings.flatten.compact #.collect{|p| }
-    logger.info "UNIQ_FOR_SETTINGS: #{@uniq_for_settings}"
+    
+    #logger.info "UNIQ_FOR_SETTINGS: #{@uniq_for_settings}"
     #HarvestEntry.of(User.current.id).uniq_project
 
     if request.post? 
-      logger.info '^^^^^^^^^^^^^^^^^^^^^^ POST POST POST POST'
+      #logger.info '^^^^^^^^^^^^^^^^^^^^^^ POST POST POST POST'
       if params['new_settings']
-        logger.info '^^^^^^^^^^^^^^^^^^^^^^  NEW NEW NEW SETTING SETTING SETTINGZ'
+        #logger.info '^^^^^^^^^^^^^^^^^^^^^^  NEW NEW NEW SETTING SETTING SETTINGZ'
         to_save = false
         tmp_arr = []
         params['new_settings'].each_with_index do |new_setting, i|
-          logger.info "SETTING #{new_setting}"
-          
-          
-          
+          #logger.info "SETTING #{new_setting}"
+
           if new_setting[0].match /redmine_harvest_smc_notes_string/
             tmp_arr << new_setting[1] 
             to_save = true
@@ -97,7 +99,8 @@ class HarvestEntryController < ApplicationController
           
           
         end
-        flash[:notice] = 'success' if to_save
+        flash[:notice] = 'Success!' if to_save
+        redirect_to harvest_settings_path
       end
     end #req post
 
@@ -134,63 +137,64 @@ class HarvestEntryController < ApplicationController
 
   end #harvest_fetch
 
-  def harvest_fetch_day
+  #  # UNUSED!
+  # def harvest_fetch_day
 
-    if params[:day]
-      if params[:day] == 'today'
-        flash[:notice] = "UPDATING TDAY!"
-        @did_fetch_new_entries = false
-        fetch_entries_for Time.now.yday
-      end
-    end 
+  #   if params[:day]
+  #     if params[:day] == 'today'
+  #       flash[:notice] = "UPDATING TDAY!"
+  #       @did_fetch_new_entries = false
+  #       fetch_entries_for Time.now.yday
+  #     end
+  #   end 
 
-    respond_to do |format|
-      format.html { redirect_to :action => 'index'}
-      #format.json { render :partial => 'foobar', :layout => false}
-    end
+  #   respond_to do |format|
+  #     format.html { redirect_to :action => 'index'}
+  #     #format.json { render :partial => 'foobar', :layout => false}
+  #   end
 
-  end
+  # end
 
-  # UNUSED! 
-  def harvest_fetch_week
+  # # UNUSED! 
+  # def harvest_fetch_week
     
-    @did_fetch_new_entries = true
-    #throw out the blanks
-    myFlashNotice = HarvestEntry.fetch_entries_from_to(User.current.id, (Time.now.yday - 7), Time.now.yday)
+  #   @did_fetch_new_entries = true
+  #   #throw out the blanks
+  #   myFlashNotice = HarvestEntry.fetch_entries_from_to(User.current.id, (Time.now.yday - 7), Time.now.yday)
     
 
-    begin
-      unless myFlashNotice.empty?
-        flash[:error] = myFlashNotice.to_s 
-      end
-    rescue 
-      @did_fetch_new_entries = false
-      flash[:error] = l :rm_smc_please_setup_harvest_user
-    end
+  #   begin
+  #     unless myFlashNotice.empty?
+  #       flash[:error] = myFlashNotice.to_s 
+  #     end
+  #   rescue 
+  #     @did_fetch_new_entries = false
+  #     flash[:error] = l :rm_smc_please_setup_harvest_user
+  #   end
 
 
 
-    respond_to do |format|
-      format.html { redirect_to :action => 'index'}
-      #format.json { render :partial => 'foobar', :layout => false}
-    end
-  end #harvest_fetch_week
+  #   respond_to do |format|
+  #     format.html { redirect_to :action => 'index'}
+  #     #format.json { render :partial => 'foobar', :layout => false}
+  #   end
+  # end #harvest_fetch_week
 
-  # UNUSED!
-  def checkbox_action 
-    logger.info "_______________ CHECKBOX_ACTION"
-    if request.post? and params[:harvest_entry]
-      logger.info "____________ #{params[:harvest_entry]["rm_smc_checbox_action"]}"
-      if params[:harvest_entry]["rm_smc_checbox_action"] == 'reconcile'
-        logger.info "------ reconcile reconcile reconcile!"
-        reconcile
-      elsif params[:harvest_entry]["rm_smc_checbox_action"] == 'destroy'
-        logger.info "------ destroy destroy destroy!"
-        destroy
-      end
+  # # UNUSED!
+  # def checkbox_action 
+  #   logger.info "_______________ CHECKBOX_ACTION"
+  #   if request.post? and params[:harvest_entry]
+  #     logger.info "____________ #{params[:harvest_entry]["rm_smc_checbox_action"]}"
+  #     if params[:harvest_entry]["rm_smc_checbox_action"] == 'reconcile'
+  #       logger.info "------ reconcile reconcile reconcile!"
+  #       reconcile
+  #     elsif params[:harvest_entry]["rm_smc_checbox_action"] == 'destroy'
+  #       logger.info "------ destroy destroy destroy!"
+  #       destroy
+  #     end
 
-    end
-  end
+  #   end
+  # end
 
   def reconcile 
     #takes and array of checked paramz and callz HarvetEntry method accordingly.
@@ -266,7 +270,7 @@ class HarvestEntryController < ApplicationController
     #harvest_entries?
     if params[:harvest_entries]
       #logger.info params.inspect
-      logger.info "______-__-_-__-_-_-_ GONNA DESTORYR "
+      logger.info "______-__-_-__-_-_-_ GONNA DESTROY "
 
       HarvestEntry.destroy_for_each_entry(params[:harvest_entries], User.current.id)
 
