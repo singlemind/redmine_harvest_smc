@@ -254,6 +254,7 @@ class HarvestEntryController < ApplicationController
     #flash[:notice] = HarvestEntry.where(:status => params[:status], :id => params[:harvest_entries], :redmine_user_id => User.current.id ).count.to_s
     
     #of(User.current.id)
+    
     HarvestEntry.reconcile User.current.id
 
 
