@@ -241,7 +241,7 @@
                         <%= entry.redmine_issue_id %>
                     </a>
                     <% else %>
-                        <del class="unmatched_rm_issue"><%= entry.redmine_issue_id %></del>
+                        <p title="<%= entry.redmine_issue_id %>">!!!</p>
                     <% end %>
                 </td>
                 <td><%= entry.client %></td>
