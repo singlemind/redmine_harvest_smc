@@ -4,6 +4,7 @@ class HarvestEntry < ActiveRecord::Base
   STATUS_STRINGS = [ 'new', 'problem', 'matched', 'unmatched', 'flagged', 'reconciled', 'locked' ]
   DESTROYED_STATUS = 'destroyed'
   VALIDATION_STATUS = 'validation'
+  SETTINGS_STATUS = 'settings'
   DEFAULT_STATUS = STATUS_STRINGS[0]
   PROBLEM_STATUS = STATUS_STRINGS[1]
   MATCHED_STATUS = STATUS_STRINGS[2] 
@@ -35,11 +36,15 @@ class HarvestEntry < ActiveRecord::Base
     where :spent_at => d
   }
 
-  scope :uniq_project, select("DISTINCT project")
+  scope :uniq_notes, select("DISTINCT notes")
 
-  scope :uniq_task, select("DISTINCT task")
-
-  scope :uniq_client, select("DISTINCT client")
+  def set_updated_at
+    self.updated_at = Time.now
+  end
+  
+  def set_created_at
+    self.created_at = Time.now
+  end
 
   def self.fetch_entries(redmine_user_id, day_of_the_year = Time.now.yday, year = Time.now.year)
   	force_sync = true 
@@ -413,12 +418,152 @@ class HarvestEntry < ActiveRecord::Base
     return myFlashNotice
   end
 
-  def set_updated_at
-    self.updated_at = Time.now
-  end
-  
-  def set_created_at
-    self.created_at = Time.now
-  end
-  
+  def self.fetch_projects( redmine_user_id )
+
+    error_string = ""
+    redmine_user = User.find(redmine_user_id)
+    harvest_user = HarvestUser.find_by_redmine_user_id(redmine_user_id)
+
+    if harvest_user.nil?
+      #flash[:error] = "#{l(:no_user_set)}"
+      #error_string << l(:no_user_set)
+      logger.error "NO USER SET"
+      error_string << "NO USER SET"
+      return 
+    end
+
+    return error_string << "NOT AN ADMIN" if harvest_user.is_harvest_admin==false
+
+    check_harvest_admin_status = harvest_user.is_harvest_admin.nil? ? true : false
+    
+    begin 
+
+      harvest = HarvestClient.new(harvest_user.decrypt_username,harvest_user.decrypt_password, Setting["plugin_redmine_harvest_smc"]["harvest_subdomain"])
+
+      response = harvest.request "/projects", :get
+      #logger.info  response.body
+      xml_doc = Nokogiri::XML(response.body)
+
+
+      harvest_sync = HarvestSync.new
+
+      harvest_sync.year = Time.now.year
+      harvest_sync.status = SETTINGS_STATUS
+      harvest_sync.for_redmine_user_id = redmine_user_id
+      harvest_sync.save!
+      
+      xml_doc.xpath("//project").each do |project|
+        
+        harvest_project = HarvestProject.new
+      
+        #TODO: attr_accessor for error strings?
+        #flash[:notice] = "Harvest entries found: #{xml_doc.xpath("//day_entry").count}"
+        
+        harvest_project.project_id = project.xpath("id").text
+       
+
+        begin 
+          #check to see if this project has a harvest id that already exists in our db. 
+          prev_entry = HarvestProject.find_by_project_id(harvest_project.project_id)
+          #TODO: dirty record checking...
+          next if prev_entry
+        #TODO: rescue RecordNotFound err...
+        rescue 
+          logger.info "NEW PROJECT FOUND"
+        end
+        
+
+        harvest_project.project_name = project.xpath("name").text
+        harvest_project.project_client_id = project.xpath("client-id").text
+        harvest_project.project_code = project.xpath("code").text
+        harvest_project.project_notes = project.xpath("notes").text        
+
+        harvest_project.save! unless prev_entry
+        
+      end #each
+      
+    rescue Exception => e
+      #could this infer that the user is not an admin?
+
+      # error_string is a attr_accessor 
+      logger.error "Harvest API returned 404, seems like this is not an admin user..." if e.to_s.match /404/ 
+      harvest_user.is_harvest_admin = false if e.to_s.match /404/ and check_harvest_admin_status
+      error_string << "#{l(:harvest_api_error)}: #{e} "
+    end 
+    return error_string    
+  end #fetch_projects
+
+  def self.fetch_tasks( redmine_user_id )
+
+    error_string = ""
+    redmine_user = User.find(redmine_user_id)
+    harvest_user = HarvestUser.find_by_redmine_user_id(redmine_user_id)
+
+    if harvest_user.nil?
+      #flash[:error] = "#{l(:no_user_set)}"
+      #error_string << l(:no_user_set)
+      logger.error "NO USER SET"
+      error_string << "NO USER SET"
+      return 
+    end
+
+    return error_string << "NOT AN ADMIN" if harvest_user.is_harvest_admin==false
+
+    check_harvest_admin_status = harvest_user.is_harvest_admin.nil? ? true : false
+    
+    begin 
+
+      harvest = HarvestClient.new(harvest_user.decrypt_username,harvest_user.decrypt_password, Setting["plugin_redmine_harvest_smc"]["harvest_subdomain"])
+
+      response = harvest.request "/tasks", :get
+      #logger.info  response.body
+      xml_doc = Nokogiri::XML(response.body)
+
+
+      harvest_sync = HarvestSync.new
+
+      harvest_sync.year = Time.now.year
+      harvest_sync.status = SETTINGS_STATUS
+      harvest_sync.for_redmine_user_id = redmine_user_id
+      harvest_sync.save!
+      
+      xml_doc.xpath("//task").each do |task|
+        
+        harvest_task = HarvestTask.new
+      
+        #TODO: attr_accessor for error strings?
+        #flash[:notice] = "Harvest entries found: #{xml_doc.xpath("//day_entry").count}"
+        
+        harvest_task.task_id = task.xpath("id").text
+       
+
+        begin 
+          #check to see if this project has a harvest id that already exists in our db. 
+          prev_entry = HarvestTask.find_by_task_id(harvest_task.task_id)
+          #TODO: dirty record checking...
+          next if prev_entry
+        #TODO: rescue RecordNotFound err...
+        rescue 
+          logger.info "NEW TASK FOUND"
+        end
+        
+
+        harvest_task.task_name = task.xpath("name").text
+        harvest_task.task_deactivated = task.xpath("deactivated").text
+
+        harvest_task.save! unless prev_entry
+        
+      end #each
+      
+    rescue Exception => e
+      #could this infer that the user is not an admin?
+
+      # error_string is a attr_accessor 
+      logger.error "Harvest API returned 404, seems like this is not an admin user..." if e.to_s.match /404/ 
+      harvest_user.is_harvest_admin = false if e.to_s.match /404/ and check_harvest_admin_status
+      error_string << "#{l(:harvest_api_error)}: #{e} "
+    end 
+    return error_string    
+  end #fetch_tasks
+
 end

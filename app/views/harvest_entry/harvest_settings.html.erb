@@ -8,7 +8,7 @@
         
         $('#addSetting').click( function() {
           //<input type="text" id="rm_smc_setting" size="25" name="new_settings[redmine_harvest_smc_notes_string' + i +']" value="" placeholder="HARVEST NOTES STRING" />
-          var new_row = $('<tr><td id="clone_placeholder'+i+'"></td><td>→</td><td><input type="text" id="rm_smc_setting_redmine_issue'+i+'" size="16" name="new_settings[redmine_harvest_smc_redmine_issue' + i +']" value="" placeholder="REDMINE ISSUE ID" /><a href="#" id="rmSetting">X</a></td></tr>');
+          var new_row = $('<tr><td id="projects_clone_placeholder'+i+'"></td><td id="tasks_clone_placeholder'+i+'"></td><td id="clone_placeholder'+i+'"></td><td>→</td><td><input type="text" id="rm_smc_setting_redmine_issue'+i+'" size="16" name="new_settings[redmine_harvest_smc_redmine_issue' + i +']" value="" placeholder="REDMINE ISSUE ID" /><a href="#" id="rmSetting">X</a></td></tr>');
            //.insertAfter('.ui-widget:last').find('input, button').remove();
           new_row.appendTo(settingz);
 
@@ -19,11 +19,26 @@
           var clone = $('#combobox').clone().attr('id', new_clone_id);
           var clone_new_name = 'new_settings[redmine_harvest_smc_notes_string' + i +']'
           clone.attr('name', clone_new_name);
-          
-          
           clone.appendTo(clone_placeholder);
-
           $(clone).combobox();
+
+          var projects_clone_id_str = '#projects_clone_placeholder'+i;
+          var projects_clone_placeholder = $(projects_clone_id_str);
+          var projects_new_clone_id = '#projects_combobox'+i
+          var projects_clone = $('#projects_combobox').clone().attr('id', projects_new_clone_id);
+          var projects_clone_new_name = 'new_settings[redmine_harvest_smc_project' + i +']'
+          projects_clone.attr('name', projects_clone_new_name);
+          projects_clone.appendTo(projects_clone_placeholder);
+
+          var tasks_clone_id_str = '#tasks_clone_placeholder'+i;
+          var tasks_clone_placeholder = $(tasks_clone_id_str);
+          var tasks_new_clone_id = '#tasks_combobox'+i
+          var tasks_clone = $('#tasks_combobox').clone().attr('id', tasks_new_clone_id);
+          var tasks_clone_new_name = 'new_settings[redmine_harvest_smc_task' + i +']'
+          tasks_clone.attr('name', tasks_clone_new_name);
+          tasks_clone.appendTo(tasks_clone_placeholder);
+
+
           i++;
           return false;
         });
@@ -192,6 +207,8 @@
 <table id="rm_smc_settings">
   <thead>
     <tr>
+      <td><%= l(:rm_smc_project) %></td>
+      <td><%= l(:rm_smc_task) %></td>
       <td><%= l(:rm_smc_regex) %></td>
       <td><%= l(:rm_smc_applies_to) %></td>
       <td><%= l(:rm_smc_rm_issue) %></td>
@@ -222,10 +239,26 @@
 
   <tr>
     <td>
+      <div class="ui-widget">
+        
+        <%= select_tag("new_settings[redmine_harvest_smc_project]", options_for_select(@projects), :include_blank => true, :id => :projects_combobox) %>
+        
+      </div>
+    </td>
+    <td>
+      <div class="ui-widget">
+        
+        <%= select_tag("new_settings[redmine_harvest_smc_task]", options_for_select(@tasks), :include_blank => true, :id => :tasks_combobox) %>
+        
+      </div>
+      
+    </td>
+
+    <td>
      
       <div class="ui-widget">
         
-        <%= select_tag("new_settings[redmine_harvest_smc_notes_string]", options_for_select(@uniq_for_settings), :include_blank => true, :id => :combobox) %>
+        <%= select_tag("new_settings[redmine_harvest_smc_notes_string]", options_for_select(@notes), :include_blank => true, :id => :combobox) %>
         
       </div>
     </td>

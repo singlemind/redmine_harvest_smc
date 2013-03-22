@@ -60,13 +60,15 @@ class HarvestEntryController < ApplicationController
 
   def harvest_settings
 
-    @harvest_settings = HarvestSettings.all
-    uniq_for_settings = []
-    uniq_for_settings << HarvestEntry.uniq_project.collect{|p| p.project}
-    uniq_for_settings << HarvestEntry.uniq_client.collect{|c| c.client}
-    uniq_for_settings << HarvestEntry.uniq_task.collect{|t| t.task}
+    HarvestEntry.fetch_projects User.current.id
+    HarvestEntry.fetch_tasks User.current.id
 
-    @uniq_for_settings = uniq_for_settings.flatten.compact #.collect{|p| }
+    @harvest_settings = HarvestSettings.all
+
+    @projects = HarvestProject.uniq_project.collect{|p| p.project_name}
+    @tasks = HarvestTask.uniq_task.collect{|t| t.task_name}
+    @notes = HarvestEntry.uniq_notes.collect{|n| n.notes}
+    @notes.reject! { |n| n.match /\d/ }
     
     #logger.info "UNIQ_FOR_SETTINGS: #{@uniq_for_settings}"
     #HarvestEntry.of(User.current.id).uniq_project

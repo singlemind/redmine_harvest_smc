@@ -29,6 +29,8 @@ en:
   rm_smc_sync_dates: "Fetch Days"
   rm_smc_settings: "Harvest Settings"
   rm_smc_settings_info: "The STRING on the left will match Harvest entry notes and apply time to the first matched RedMine ISSUE on the right."
+  rm_smc_project: "Harvest Project"
+  rm_smc_task: "Harvest Task Type"
   rm_smc_regex: "Harvest Notes String"
   rm_smc_applies_to: "to"
   rm_smc_rm_issue: "Redmine Issue ID"
