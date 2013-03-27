@@ -5,9 +5,9 @@ namespace :redmine_harvest_smc do
 
 
     HarvestUser.all.each do |user|
-      puts "argz: #{user.redmine_user_id}, #{Time.now.yday}, #{Time.now.year}, true"
+      #puts "argz: #{user.redmine_user_id}, #{Time.now.yday}, #{Time.now.year}, true"
       error_string = HarvestEntry.validate_entries_for(user.redmine_user_id, Time.now.yday, Time.now.year, true)
-      puts "#{error_string}"
+      #puts "#{error_string}"
       
       #puts "ABOUT TO RECONCILE!"
       #HarvestEntry.reconcile user.redmine_user_id

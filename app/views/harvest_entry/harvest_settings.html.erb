@@ -219,9 +219,13 @@
   <% @harvest_settings.each do |setting| %>
   <tr>
     <td>
-      <%# create key names in the settings hash that include the project_id so we can create form fields and reference them later. %>
+      <%= setting.project %>
+    </td>
+    <td>
+      <%= setting.task %>
+    </td>
+    <td>
       <%= setting.notes_string %>
-      <%# text_field_tag "settings[redmine_harvest_smc_applies_to_rm_issue]", setting.notes_string] %>
     </td>
     <td>
       →
@@ -273,7 +277,7 @@
 
   <tfoot>
     <tr>
-      <td><i><a href="#" id="addSetting">Add Another</a></i></td>
+      <td><!--i>< a href="#" id="addSetting">Add Another</a></i--></td>
     </tr>
   </tfoot>
 </table>

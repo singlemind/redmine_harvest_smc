@@ -159,7 +159,7 @@
             <span id="rmDateFilter">Date</span>
             <span id="rmUserFilter">RM User</span>
             <span id="rmIssueFilter">RM Issue</span>
-            <span id="clientFilter">Client</span>
+            <span id="projectFilter">Project</span>
             <span id="taskFilter">Task</span>
             <span id="hoursFilter">Hours</span>
             <span id="notesFilter">Notes</span>
@@ -178,7 +178,11 @@
             <!--button id="rm_smc_sync_dates" href="#" ><%# t :rm_smc_sync_dates %></button-->
             <button id="rm_smc_validate" href="#" ><%= t :rm_smc_sync %> <i class="icon-refresh"></i></button>
             <label for="rm_smc_validate_force"><%= t :rm_smc_force %></label>
-            <input type="checkbox" id="rm_smc_validate_force" name="harvest_entry[rm_smc_validate_force]" />
+            <input type="checkbox" id="rm_smc_validate_force" name="harvest_entry[rm_smc_validate_force]" checked="checked" />
+            <% if User.current.admin? %> 
+              <label for="rm_smc_validate_all_users"><%= t :rm_smc_all_users %></label>
+              <input type="checkbox" id="rm_smc_validate_all_users" name="harvest_entry[rm_smc_validate_all_users]" />
+            <% end %>
             <br />
         </div>
     </fieldset>
@@ -197,7 +201,7 @@
             <td><span>Date</span></td>
             <td><span>RM User</span></td>
             <td><span>RM Issue</span></td>
-            <td><span>Client</span></td>
+            <td><span>Project</span></td>
             <td><span>Task</span></td>
             <td><span>Hours</span></td>
             <td><span>Notes</span></td>
@@ -212,7 +216,7 @@
             <td>date</td>
             <td>RM user</td>
             <td>RM issue</td>
-            <td>client</td>
+            <td>project</td>
             <td>task</td>
             <td>hours</td>
             <td>notes</td> 
@@ -244,7 +248,7 @@
                         <p title="<%= entry.redmine_issue_id %>">!!!</p>
                     <% end %>
                 </td>
-                <td><%= entry.client %></td>
+                <td><%= entry.project %></td>
                 <td><%= entry.task %></td>
                 
                 <td><% if entry.redmine_time_entry_id %>

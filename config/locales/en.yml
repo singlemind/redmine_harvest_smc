@@ -36,6 +36,7 @@ en:
   rm_smc_rm_issue: "Redmine Issue ID"
   rm_smc_validate: "Validate Dates"
   rm_smc_force: "FORCE"
+  rm_smc_all_users: "ALL USERS"
   rm_smc_subdomain: "Harvest Subdomain"
   rm_smc_totals: "Total"
   rm_smc_total_users: "Users:"

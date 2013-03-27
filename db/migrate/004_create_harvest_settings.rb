@@ -2,10 +2,10 @@ class CreateHarvestSettings < ActiveRecord::Migration
   def change
     create_table :harvest_settings do |t|
       t.string :notes_string
-      #t.string :project
-      #t.integer :project_id
-      #t.string :task
-      #t.integer :task_id
+      t.string :project
+      t.integer :project_id
+      t.string :task
+      t.integer :task_id
       t.integer :redmine_issue
       t.integer :redmine_user_id
       t.integer :harvest_user_id

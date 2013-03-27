@@ -64,7 +64,7 @@ $(document).ready(function() {
 		, { sSelector: "#rmDateFilter" }
 		, { sSelector: "#rmUserFilter", type: "select"  } 
 		, { sSelector: "#rmIssueFilter" } 
-		, { sSelector: "#clientFilter", type: "select"  }
+		, { sSelector: "#projectFilter", type: "select"  }
 		, { sSelector: "#taskFilter", type: "select"  } 
 		, { sSelector: "#hoursFilter" }
 		, { sSelector: "#notesFilter" }

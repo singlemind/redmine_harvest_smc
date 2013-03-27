@@ -60,6 +60,7 @@ class HarvestEntryController < ApplicationController
 
   def harvest_settings
 
+    #todo 
     HarvestEntry.fetch_projects User.current.id
     HarvestEntry.fetch_tasks User.current.id
 
@@ -77,41 +78,33 @@ class HarvestEntryController < ApplicationController
       #logger.info '^^^^^^^^^^^^^^^^^^^^^^ POST POST POST POST'
       if params['new_settings']
         #logger.info '^^^^^^^^^^^^^^^^^^^^^^  NEW NEW NEW SETTING SETTING SETTINGZ'
-        to_save = false
-        tmp_arr = []
-        params['new_settings'].each_with_index do |new_setting, i|
-          #logger.info "SETTING #{new_setting}"
+        #logger.info params.inspect
+        
+        s = HarvestSettings.new 
+        s.redmine_user_id = User.current.id 
+        
+        s.project        = params['new_settings']['redmine_harvest_smc_project'] unless params['new_settings']['redmine_harvest_smc_project'].nil?
+        s.task           = params['new_settings']['redmine_harvest_smc_task'] unless params['new_settings']['redmine_harvest_smc_task'].nil?
+        s.notes_string   = params['new_settings']['redmine_harvest_smc_notes_string'] unless params['new_settings']['redmine_harvest_smc_notes_string'].nil?
+        s.redmine_issue  = params['new_settings']['redmine_harvest_smc_redmine_issue'].to_i unless params['new_settings']['redmine_harvest_smc_redmine_issue'].nil?
 
-          if new_setting[0].match /redmine_harvest_smc_notes_string/
-            tmp_arr << new_setting[1] 
-            to_save = true
-          elsif new_setting[0].match /redmine_harvest_smc_redmine_issue/
-            tmp_arr << new_setting[1].to_i 
-            to_save = true
-          end
-          
-          if tmp_arr.count > 1 and to_save
-            s = HarvestSettings.new 
-            s.redmine_user_id = User.current.id 
-            s.notes_string = tmp_arr[0]
-            s.redmine_issue = tmp_arr[1]
-            s.save 
-            tmp_arr = []
-          end
-          
-          
+        if s.save 
+          flash[:notice] = 'Success!'
+        else
+          flash[:error] = s.errors.full_messages.to_s
         end
-        flash[:notice] = 'Success!' if to_save
+
         redirect_to harvest_settings_path
+
       end
     end #req post
 
     if request.delete?
       #params['settings']
-      logger.info '~~~~~~~~~~~~~ DELETE!'
-      logger.info "~~~~~~~~~~~~~ #{params.inspect}"
+      #logger.info '~~~~~~~~~~~~~ DELETE!'
+      #logger.info "~~~~~~~~~~~~~ #{params.inspect}"
       begin
-        setting = HarvestSettings.find(params['setting_id'].to_i)
+        setting = HarvestSettings.find_by_id(params['setting_id'].to_i)
         delete_message = "#{setting.notes_string} destroyed!"
       rescue ActiveRecord::RecordNotFound
         flash[:notice] = 'No such setting id.'
@@ -121,8 +114,9 @@ class HarvestEntryController < ApplicationController
         setting.status = 'destroyed'
         setting.save!
         flash[:notice] = delete_message
-      rescue
-        flash[:notice] = 'PROBLEM'
+      rescue Exception => e
+        flash[:notice] = "#{e.to_s}"
+
       end
 
       redirect_to harvest_settings_path
@@ -232,20 +226,34 @@ class HarvestEntryController < ApplicationController
 
       #legacy?
       @did_fetch_new_entries = false
-
-      if params[:harvest_entry]["rm_smc_validate_force"] == 'on'
-        logger.info "------------- VALIDATING ENTRIES USING [[FORCE]] MUHAHA!"
+      
+      if params[:harvest_entry]["rm_smc_validate_all_users"] == 'on'
+        logger.info "------------- VALIDATING ENTRIES FOR ALL USERS!"
+        error_string = ""
         for i in from..to do 
-          #(redmine_user_id, day_of_the_year = Time.now.yday, year = Time.now.year, force_validate = false)
           # TODO: pass the year as a param from the javascript selector!
-          HarvestEntry.validate_entries_for(User.current.id, i, Time.now.year, true)
+          HarvestUser.all.each do |user|
+            error_string << HarvestEntry.validate_entries_for(user.redmine_user_id, i, Time.now.year, true)
+          end 
         end
-      elsif params[:harvest_entry]["rm_smc_checbox_action"] == 'validate'
-        for i in from..to do 
-          logger.info "------------- VALIDATING ENTRIES!"
-          HarvestEntry.validate_entries_for(User.current.id, i)
+      else
+        if params[:harvest_entry]["rm_smc_validate_force"] == 'on'
+          logger.info "------------- VALIDATING ENTRIES USING [[FORCE]] MUHAHA!"
+          for i in from..to do 
+            #(redmine_user_id, day_of_the_year = Time.now.yday, year = Time.now.year, force_validate = false)
+            # TODO: pass the year as a param from the javascript selector!
+            HarvestEntry.validate_entries_for(User.current.id, i, Time.now.year, true)
+          end
+        #TODO: is this elseif depricated? 
+        elsif params[:harvest_entry]["rm_smc_checbox_action"] == 'validate'
+          for i in from..to do 
+            logger.info "------------- VALIDATING ENTRIES!"
+            HarvestEntry.validate_entries_for(User.current.id, i)
+          end
         end
-      end
+      end #if rm_smc_validate_all_users
+      
+
       redirect_to :action => "index"
       return
     end

@@ -238,42 +238,81 @@ class HarvestEntry < ActiveRecord::Base
 
   def self.reconcile(userID = nil, status = 'problem')
     
+    #logger.info "%%%%%%%%%%%%%%% ABOUT TO RECONCILE!"
     HarvestEntry.update_rm_id_for_all_entries(userID)
 
 
     entry = HarvestEntry.where(:status => status, :redmine_user_id => userID ).each do |e|
+      
       harvest_settings = HarvestSettings.all
       
       harvest_settings.each do |setting|
-        if e.notes =~ /#{Regexp.escape(setting.notes_string)}/
-          e.redmine_issue_id = setting.redmine_issue
-          e.status = MATCHED_STATUS
-          e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)
-        elsif e.project =~ /#{Regexp.escape(setting.notes_string)}/
-          e.redmine_issue_id = setting.redmine_issue
-          e.status = MATCHED_STATUS
-          e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)
-        elsif e.task =~ /#{Regexp.escape(setting.notes_string)}/
-          e.redmine_issue_id = setting.redmine_issue
-          e.status = MATCHED_STATUS
-          e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)  
-        elsif e.client =~ /#{Regexp.escape(setting.notes_string)}/
-          e.redmine_issue_id = setting.redmine_issue
-          e.status = MATCHED_STATUS
-          e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)
-        else 
-          #if there is already a redmine_issue_id, should not set the status to problem.
-          #TODO: status_info
-          e.status = 'problem' if e.redmine_issue_id.blank?
+        
+        unless setting.notes_string.nil?
+          #logger.info "%%%%%%%%%%%%%%%% notes_string not nil!"
+          if !setting.notes_string.blank? and e.notes =~ /#{Regexp.escape(setting.notes_string)}/
+            #logger.info "%%%%%%%%%%%%%%%% MATCHED notes_string!"
+            e.redmine_issue_id = setting.redmine_issue
+            e.status = MATCHED_STATUS
+            #e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)
+            e.save! 
+            next
+          end
+          
         end
-        e.save!
+
+        unless setting.project.nil?
+          #logger.info "%%%%%%%%%%%%%%%% project not nil!"
+          if !setting.task.nil?
+            #logger.info "%%%%%%%%%%%%%%%% task not nil!"
+            #JUST A PROJECT!
+            if !setting.project.blank? and e.project =~ /#{Regexp.escape(setting.project)}/
+              #logger.info "%%%%%%%%%%%%%%%% MATCHED project!"
+              e.redmine_issue_id = setting.redmine_issue
+              e.status = MATCHED_STATUS
+              #e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)
+              e.save!  
+              next
+            end
+            
+          else
+            #MUST HAVE A TASK, TOO! CHECK BOTH!
+            if !setting.project.blank? and e.project =~ /#{Regexp.escape(setting.project)}/ and !setting.task.blank? and e.task =~ /#{Regexp.escape(setting.task)}/
+              #logger.info "%%%%%%%%%%%%%%%% MATCHED project AND task!!"
+              e.redmine_issue_id = setting.redmine_issue
+              e.status = MATCHED_STATUS
+              #e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)  
+              e.save!  
+              next
+            end
+            
+          end
+          
+          
+        end
+        
+        #MUST JUST HAVE A TASK DEFINED...
+        unless setting.task.nil?
+          #logger.info "%%%%%%%%%%%%%%%% task not nil!"
+          if !setting.task.blank? and e.task =~ /#{Regexp.escape(setting.task)}/
+            #logger.info "%%%%%%%%%%%%%%%% MATCHED just task!"
+            e.redmine_issue_id = setting.redmine_issue
+            e.status = MATCHED_STATUS
+            #e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)  
+            e.save!  
+            next
+          end
+
+        end
+        #TODO: status_info
+        #e.status = 'problem' if e.redmine_issue_id.blank?
+        #logger.info "%%%%%%%%%%%% END OF SETTINGS!"
 
       end
       
     end
 
     HarvestEntry.set_time_for_all_entries(userID)
-
 
   end
 
@@ -370,7 +409,7 @@ class HarvestEntry < ActiveRecord::Base
         #call sync to update 'new' entries.
         logger.info "GOING TO FETCH ENTRIES!"
         fetch_entries_from_to(redmine_user_id, day_of_the_year, day_of_the_year)
-        reconcile(redmine_user_id)
+        
 
         #fetch_entries( redmine_user_id, day_of_the_year, year )
         #update_rm_id_for_all_entries
@@ -378,6 +417,7 @@ class HarvestEntry < ActiveRecord::Base
 
       end #if _diff and whatnot
     
+      reconcile(redmine_user_id)
 
       #PHEW! we just got through a lot, mmm... 
 
@@ -507,6 +547,7 @@ class HarvestEntry < ActiveRecord::Base
       return 
     end
 
+    #TODO: return false and set errors :base
     return error_string << "NOT AN ADMIN" if harvest_user.is_harvest_admin==false
 
     check_harvest_admin_status = harvest_user.is_harvest_admin.nil? ? true : false
