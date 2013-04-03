@@ -517,7 +517,8 @@ class HarvestEntry < ActiveRecord::Base
         harvest_project.project_client_id = project.xpath("client-id").text
         harvest_project.project_code = project.xpath("code").text
         harvest_project.project_notes = project.xpath("notes").text        
-
+        harvest_project.project_active = project.xpath("active").text
+        
         harvest_project.save! unless prev_entry
         
       end #each

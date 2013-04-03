@@ -66,7 +66,7 @@ class HarvestEntryController < ApplicationController
 
     @harvest_settings = HarvestSettings.all
 
-    @projects = HarvestProject.uniq_project.collect{|p| p.project_name}
+    @projects = HarvestProject.active_only.uniq_project.collect{|p| p.project_name}
     @tasks = HarvestTask.uniq_task.collect{|t| t.task_name}
     @notes = HarvestEntry.uniq_notes.collect{|n| n.notes}
     @notes.reject! { |n| n.match /\d/ }
