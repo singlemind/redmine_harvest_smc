@@ -263,7 +263,7 @@ class HarvestEntry < ActiveRecord::Base
 
         unless setting.project.nil?
           #logger.info "%%%%%%%%%%%%%%%% project not nil!"
-          if !setting.task.nil?
+          if setting.task.nil?
             #logger.info "%%%%%%%%%%%%%%%% task not nil!"
             #JUST A PROJECT!
             if !setting.project.blank? and e.project =~ /#{Regexp.escape(setting.project)}/
