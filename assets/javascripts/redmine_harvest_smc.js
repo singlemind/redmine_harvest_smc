@@ -2,12 +2,21 @@ function redrawTimeout() {
 	$('#redmine_harvest_smc_table').dataTable().fnDraw();
 }
 
+// function addCommas(nStr){nStr+='';x=nStr.split('.');x1=x[0];x2=x.length>1?'.'+ x[1]:'';var rgx=/(\d+)(\d{3})/;while(rgx.test(x1)){x1=x1.replace(rgx,'$1'+','+'$2');}
+// return x1+ x2;}
+
 $(document).ready(function() {
 	var oTable = $('#redmine_harvest_smc_table').dataTable( 
 		{ //"sScrollY": "400px" 
-		  "bPaginate": false
-    //, "sPaginationType": "fullnumbers"
-		, "bStateSave": true
+    //  "bProcessing": true
+		  "bPaginate": true
+    , "sPaginationType": "full_numbers"
+      
+    , "bLengthChange": true 
+    , "iDisplayLength": 500
+    , "aLengthMenu": [[100, 250, 500, 1000, 5000, -1], [100, 250, 500, 1000, 5000, "All"]]
+		
+    , "bStateSave": true
 
 		, "aaSorting": [[ 1, "desc" ]]
 		, "bAutoWidth": true
@@ -19,6 +28,42 @@ $(document).ready(function() {
                 $( 'td:eq(1)', nRow ).addClass("hightlightedRow");
             }
         }
+
+    , "fnFooterCallback": function (nRow, aaData, iStart, iEnd, aiDisplay ) {
+        var total_time = 0;
+        //var total_costs = 0;
+ 
+        /*Calculate the total for all rows, even outside this page*/
+        for (var i = 0; i < aaData.length ; i++) {
+            /*Have to strip out extra characters so parsefloat and parseInt work right*/
+            total_time += parseFloat(aaData[i][7].replace(/<(?:.|\n)*?>/gm, ''));
+            //total_costs += parseFloat(aaData[i][3].replace('$', '').replace(',',''));
+         }
+        
+        var pageTotal_count = 0;
+        //var pageTotal_costs = 0;
+
+        /*calculate totals for this page*/
+        for (var i = iStart; i < iEnd; i++) {
+          //console.log("parseFloat: "+aaData[aiDisplay[i]][7].replace(/<(?:.|\n)*?>/gm, '') );
+          pageTotal_count += parseFloat(aaData[aiDisplay[i]][7].replace(/<(?:.|\n)*?>/gm, ''));
+          //pageTotal_costs += parseFloat(aaData[aiDisplay[i]][3].replace('$', '').replace(',',''));
+        }
+
+        
+        Math.ceil(total_time * 100) / 100;
+        //console.log(" pageTotal_count: "+ pageTotal_count);
+        /*modify the footer row*/
+        // var nCells = nRow.getElementsByTagName('thead');
+        // console.log(nCells);
+        // nCells[1].innerHTML = addCommas(pageTotal_count) +
+        //     '(' + addCommas(total_time) + ' total)';
+        //console.log( addCommas(pageTotal_count) + '(' + addCommas(total_time) + ' total)' );
+        
+        $(".rm_smc_hours_total").html( Math.ceil(pageTotal_count * 100) / 100 );
+        // nCells[3].innerHTML = '$' + addCommas(pageTotal_costs.toFixed(2)) +
+        //     '($' + addCommas(total_costs.toFixed(2)) + ' total)';
+    }
 
     , "aoColumnDefs": 
 		[
@@ -48,7 +93,8 @@ $(document).ready(function() {
        * 'ip>'
       */
     	//and lfr is the search box... 
-    , "sDom": 'C tip'
+    , "sDom": 'C t<"F"lip>'
+    //, "sDom": 't<"F"lip>'
 		, "oColVis": 
 		{
 			"aiExclude": [ 0 ]
