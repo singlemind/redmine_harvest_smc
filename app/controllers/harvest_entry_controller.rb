@@ -213,19 +213,8 @@ class HarvestEntryController < ApplicationController
 
       from = params[:harvest_entry][:from]
       to = params[:harvest_entry][:to]
-      #myFlashNotice = HarvestEntry.fetch_entries_from_to(User.current.id, from, to)
-      
-      # begin
-      #   unless myFlashNotice.empty?
-      #     flash[:error] = myFlashNotice.to_s 
-      #   end
-      # rescue 
-      #   @did_fetch_new_entries = false
-      #   flash[:error] = l :rm_smc_please_setup_harvest_user
-      # end
 
-      #legacy?
-      @did_fetch_new_entries = false
+      logger.info "@@@@@@@@@@@@@@@@@@@@@@@@ #{params.inspect}"
       
       if params[:harvest_entry]["rm_smc_validate_all_users"] == 'on'
         logger.info "------------- VALIDATING ENTRIES FOR ALL USERS!"
