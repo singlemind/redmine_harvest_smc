@@ -47,9 +47,9 @@ class HarvestEntry < ActiveRecord::Base
   end
 
   def self.fetch_entries(redmine_user_id, day_of_the_year = Time.now.yday, year = Time.now.year)
-  	force_sync = true 
-  	force_timer = false
-  	error_string = ""
+    force_sync = true 
+    force_timer = false
+    error_string = ""
     redmine_name = User.find(redmine_user_id).name
 
     harvest_user = HarvestUser.find_by_redmine_user_id(redmine_user_id)
@@ -64,14 +64,14 @@ class HarvestEntry < ActiveRecord::Base
 
     begin 
 
-    	response = harvest.request "/daily/#{day_of_the_year}/#{year}", :get
+      response = harvest.request "/daily/#{day_of_the_year}/#{year}", :get
       #logger.info  response.body
       xml_doc = Nokogiri::XML(response.body)
 
-			#raise exception if a match is found unless flag=true
-			unless force_sync 
-				raise "HarvestSync already exists!" if HarvestSync.find_by_day_of_the_year(day_of_the_year)
-			end
+      #raise exception if a match is found unless flag=true
+      unless force_sync 
+        raise "HarvestSync already exists!" if HarvestSync.find_by_day_of_the_year(day_of_the_year)
+      end
 
       harvest_sync = HarvestSync.new
       harvest_sync.day_of_the_year = day_of_the_year
@@ -85,20 +85,20 @@ class HarvestEntry < ActiveRecord::Base
         
         harvest_entry = HarvestEntry.new
       
-      	#TODO: attr_accessor for error strings?
+        #TODO: attr_accessor for error strings?
         #flash[:notice] = "Harvest entries found: #{xml_doc.xpath("//day_entry").count}"
         
         harvest_entry.harvest_id = entry.xpath("id").text
         harvest_entry.hours = entry.xpath("hours").text
         harvest_entry.hours_without_timer = entry.xpath("hours_without_timer").text
-      	
-      	unless force_timer 
-      		#don't process entries that have a running timer.
-        	next if harvest_entry.hours.equal? harvest_entry.hours_without_timer
+        
+        unless force_timer 
+          #don't process entries that have a running timer.
+          next if harvest_entry.hours.equal? harvest_entry.hours_without_timer
         end
 
         begin 
-        	#check to see if this entry has a harvest id that already exists in our db. 
+          #check to see if this entry has a harvest id that already exists in our db. 
           prev_entry = HarvestEntry.find_by_harvest_id(harvest_entry.harvest_id)
           #TODO: dirty record checking...
           next if prev_entry
@@ -126,7 +126,7 @@ class HarvestEntry < ActiveRecord::Base
       end #each
       
     rescue Exception => e
-    	# error_string is a attr_accessor 
+      # error_string is a attr_accessor 
       error_string << "#{l(:harvest_api_error)}: #{e} "
     end 
     return error_string    
@@ -134,19 +134,19 @@ class HarvestEntry < ActiveRecord::Base
 
   #TODO: feed status param, 
   def self.set_time_for_all_entries(userID = nil, status = 'matched', redmine_user_id = userID)
-  	
+    
     #TODO: begin/rescue?
 
     harvest_entries = HarvestEntry.find(:all, :conditions => { :status => status } )
 
-  	harvest_entries.each do |entry|
-  		redmine_issue_id = entry.redmine_issue_id.to_s.match /\d{4}/
+    harvest_entries.each do |entry|
+      redmine_issue_id = entry.redmine_issue_id.to_s.match /\d{4}/
 
-  		#next unless redmine_issue_id
+      #next unless redmine_issue_id
       #TODO: set the status of the entry as :unmatched
       if redmine_issue_id
         user = User.find(entry.redmine_user_id)
-    		issue = Issue.find(redmine_issue_id.to_s)
+        issue = Issue.find(redmine_issue_id.to_s)
         project = issue.project
         #TODO: reflect what Harvest Has?
         activity = TimeEntryActivity.find_by_name('Development')
@@ -175,7 +175,7 @@ class HarvestEntry < ActiveRecord::Base
       end  
       entry.save!
       
-  	end 
+    end 
 
   end #end self.set_time_for_each_entry
 

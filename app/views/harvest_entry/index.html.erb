@@ -31,25 +31,20 @@
       defaultDate: "today",
       maxDate: '+0d',
       minDate: '-1y',
-      dateFormat: 'o',
+      dateFormat: 'yy-mm-dd',
       changeMonth: true,
       changeYear: true,
-      numberOfMonths: 1,
-      onClose: function( selectedDate ) {
-        $( "#rm_smc_to" ).datepicker( "option", "minDate", selectedDate );
-      }
+      numberOfMonths: 1
     });
     $( "#rm_smc_to" ).datepicker({
       defaultDate: "today",
       maxDate: '+0d',
       minDate: '-1y',
-      dateFormat: 'o',
+      dateFormat: 'yy-mm-dd',
       changeMonth: true,
       changeYear: true,
-      numberOfMonths: 1,
-      onClose: function( selectedDate ) {
-        $( "#rm_smc_from" ).datepicker( "option", "maxDate", selectedDate );
-      }
+      numberOfMonths: 1
+
     });
   });
 
@@ -186,10 +181,6 @@
             <br />
         </div>
     </fieldset>
-          
-
-            <!-- harvest_sync_status_new.path harvest_sync_status.path -->
-<!--button id="rm_smc_reconcile" href="<%= harvest_reconcile_path %>"><%# t :rm_smc_sync %></button-->
 
 <table cellpadding="0" cellspacing="0" border="0" class="display" id="redmine_harvest_smc_table">
     <thead>
@@ -268,4 +259,5 @@
 <br />
 
 <%= f.hidden_field :rm_smc_checbox_action, :value => "no" %>
+
 <% end #form -%>

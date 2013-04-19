@@ -1,20 +1,10 @@
 class HarvestEntryController < ApplicationController
   unloadable
-
-  #TODO: this does not really work, need to set map.permissions correctly?
-  #before_filter :authorize
   
   before_filter :make_sure_user_logged_in_and_has_harvest_user_setup
 
   def index
-    #fetch_entries
-    #, :conditions => { :created_at => Time.now }
-    #fetch_entries(redmine_user_id, day_of_the_year = Time.now.yday, year = Time.now.year)
-    
-    # courtesy fetch entries for today and for this user?? 
-    #courtesy_fetch
-    @did_fetch_new_entries = false
-    
+
     if params[:status]
       if params[:status] == 'destroyed'
         # unscoped could mean bad juju...
@@ -33,8 +23,9 @@ class HarvestEntryController < ApplicationController
   end
 
   def harvest_user
-    #TODO: implemented forms for encrypting and decrypting user/pass
+
     @harvest_user = HarvestUser.find_by_redmine_user_id(User.current.id) || HarvestUser.new
+    
     if request.post?
       if params[:harvest_user] 
         
@@ -60,7 +51,6 @@ class HarvestEntryController < ApplicationController
 
   def harvest_settings
 
-    #todo 
     HarvestEntry.fetch_projects User.current.id
     HarvestEntry.fetch_tasks User.current.id
 
@@ -70,12 +60,8 @@ class HarvestEntryController < ApplicationController
     @tasks = HarvestTask.uniq_task.collect{|t| t.task_name}
     @notes = HarvestEntry.uniq_notes.collect{|n| n.notes}
     @notes.reject! { |n| n.match /\d/ }
-    
-    #logger.info "UNIQ_FOR_SETTINGS: #{@uniq_for_settings}"
-    #HarvestEntry.of(User.current.id).uniq_project
 
     if request.post? 
-      #logger.info '^^^^^^^^^^^^^^^^^^^^^^ POST POST POST POST'
       if params['new_settings']
         #logger.info '^^^^^^^^^^^^^^^^^^^^^^  NEW NEW NEW SETTING SETTING SETTINGZ'
         #logger.info params.inspect
@@ -100,9 +86,6 @@ class HarvestEntryController < ApplicationController
     end #req post
 
     if request.delete?
-      #params['settings']
-      #logger.info '~~~~~~~~~~~~~ DELETE!'
-      #logger.info "~~~~~~~~~~~~~ #{params.inspect}"
       begin
         setting = HarvestSettings.find_by_id(params['setting_id'].to_i)
         delete_message = "#{setting.notes_string} destroyed!"
@@ -124,74 +107,6 @@ class HarvestEntryController < ApplicationController
     end #rew delete
   end
 
-  def harvest_fetch
-
-    respond_to do |format|
-      format.html { redirect_to :action => 'index'}
-      #format.json { render :partial => 'foobar', :layout => false}
-    end
-
-  end #harvest_fetch
-
-  #  # UNUSED!
-  # def harvest_fetch_day
-
-  #   if params[:day]
-  #     if params[:day] == 'today'
-  #       flash[:notice] = "UPDATING TDAY!"
-  #       @did_fetch_new_entries = false
-  #       fetch_entries_for Time.now.yday
-  #     end
-  #   end 
-
-  #   respond_to do |format|
-  #     format.html { redirect_to :action => 'index'}
-  #     #format.json { render :partial => 'foobar', :layout => false}
-  #   end
-
-  # end
-
-  # # UNUSED! 
-  # def harvest_fetch_week
-    
-  #   @did_fetch_new_entries = true
-  #   #throw out the blanks
-  #   myFlashNotice = HarvestEntry.fetch_entries_from_to(User.current.id, (Time.now.yday - 7), Time.now.yday)
-    
-
-  #   begin
-  #     unless myFlashNotice.empty?
-  #       flash[:error] = myFlashNotice.to_s 
-  #     end
-  #   rescue 
-  #     @did_fetch_new_entries = false
-  #     flash[:error] = l :rm_smc_please_setup_harvest_user
-  #   end
-
-
-
-  #   respond_to do |format|
-  #     format.html { redirect_to :action => 'index'}
-  #     #format.json { render :partial => 'foobar', :layout => false}
-  #   end
-  # end #harvest_fetch_week
-
-  # # UNUSED!
-  # def checkbox_action 
-  #   logger.info "_______________ CHECKBOX_ACTION"
-  #   if request.post? and params[:harvest_entry]
-  #     logger.info "____________ #{params[:harvest_entry]["rm_smc_checbox_action"]}"
-  #     if params[:harvest_entry]["rm_smc_checbox_action"] == 'reconcile'
-  #       logger.info "------ reconcile reconcile reconcile!"
-  #       reconcile
-  #     elsif params[:harvest_entry]["rm_smc_checbox_action"] == 'destroy'
-  #       logger.info "------ destroy destroy destroy!"
-  #       destroy
-  #     end
-
-  #   end
-  # end
-
   def reconcile 
     #takes and array of checked paramz and callz HarvetEntry method accordingly.
     logger.warn "----- #{params.inspect}"
@@ -211,33 +126,37 @@ class HarvestEntryController < ApplicationController
 
     if request.post? and params[:harvest_entry] and params[:harvest_entry][:from] and params[:harvest_entry][:to]
 
-      from = params[:harvest_entry][:from]
-      to = params[:harvest_entry][:to]
-
-      logger.info "@@@@@@@@@@@@@@@@@@@@@@@@ #{params.inspect}"
+      begin
+        from = Date.strptime(params[:harvest_entry][:from], '%Y-%m-%d')
+        to = Date.strptime(params[:harvest_entry][:to], '%Y-%m-%d')       
+      rescue Exception => e
+        flash[:error] = "Could not parse date!"
+      end
       
       if params[:harvest_entry]["rm_smc_validate_all_users"] == 'on'
         logger.info "------------- VALIDATING ENTRIES FOR ALL USERS!"
         error_string = ""
-        for i in from..to do 
-          # TODO: pass the year as a param from the javascript selector!
+        
+        for i in from..to do          
           HarvestUser.all.each do |user|
-            error_string << HarvestEntry.validate_entries_for(user.redmine_user_id, i, Time.now.year, true)
+            error_string << HarvestEntry.validate_entries_for(user.redmine_user_id, i.yday, i.year, true)
           end 
         end
+
+        return 
       else
         if params[:harvest_entry]["rm_smc_validate_force"] == 'on'
           logger.info "------------- VALIDATING ENTRIES USING [[FORCE]] MUHAHA!"
           for i in from..to do 
             #(redmine_user_id, day_of_the_year = Time.now.yday, year = Time.now.year, force_validate = false)
             # TODO: pass the year as a param from the javascript selector!
-            HarvestEntry.validate_entries_for(User.current.id, i, Time.now.year, true)
+            HarvestEntry.validate_entries_for(User.current.id, i.yday, i.year, true)
           end
         #TODO: is this elseif depricated? 
         elsif params[:harvest_entry]["rm_smc_checbox_action"] == 'validate'
           for i in from..to do 
             logger.info "------------- VALIDATING ENTRIES!"
-            HarvestEntry.validate_entries_for(User.current.id, i)
+            HarvestEntry.validate_entries_for(User.current.id, i.yday)
           end
         end
       end #if rm_smc_validate_all_users
@@ -247,15 +166,8 @@ class HarvestEntryController < ApplicationController
       return
     end
 
-    #TODO: trap errz
-    
-    
-    #flash[:notice] = HarvestEntry.where(:status => params[:status], :id => params[:harvest_entries], :redmine_user_id => User.current.id ).count.to_s
-    
-    #of(User.current.id)
     
     HarvestEntry.reconcile User.current.id
-
 
 
     logger.info 'NO DATE SPECIFIED!'
@@ -279,15 +191,6 @@ class HarvestEntryController < ApplicationController
       redirect_to :action => "index"
     end
   end
-
-  def sync_status
-
-    if params[:entries]
-      params[:status] ||= 'new'
-      HarvestEntry.of(User.current.id).update_rm_id_for_each_entry(params[:entries], User.current.id, params[:status])
-
-    end
-  end #sync_status
   
   private
   def make_sure_user_logged_in_and_has_harvest_user_setup
@@ -309,21 +212,5 @@ class HarvestEntryController < ApplicationController
     end
 
   end
-
-  def fetch_entries_for (date = Time.now.yday)
-    @did_fetch_new_entries = true
-    error_string = HarvestEntry.fetch_entries(User.current.id, date)
-    begin
-      unless error_string.empty?
-        flash[:error] = error_string.to_s 
-      end
-    rescue 
-      @did_fetch_new_entries = false
-      flash[:error] = l :rm_smc_please_setup_harvest_user
-    end
-  end
-
-  
-
 
 end #class
