@@ -122,19 +122,7 @@ class HarvestEntry < ActiveRecord::Base
         harvest_entry.redmine_name = redmine_name
         #hours_match = true if (prev_entry.hours == harvest_entry.hours)
         harvest_entry.save! unless prev_entry
-        
-        #use .inspect here?...
-        #logger.info  "id: #{entry.xpath("id").text} | "
-        #logger.info  "hours: #{entry.xpath("hours").text} | "
-        #logger.info  "hours_without_timer: #{entry.xpath("hours_without_timer").text} | "
-        #logger.info  "spent_at: #{entry.xpath("spent_at").text} | "
-        #logger.info  "user_id: #{entry.xpath("user_id").text} | "
-        #logger.info  "client: #{entry.xpath("client").text} | "
-        #logger.info  "project_id: #{entry.xpath("project_id").text} | "
-        #logger.info  "project: #{entry.xpath("project").text} | "
-        #logger.info  "task_id #{entry.xpath("task_id").text} | "
-        #logger.info  "task: #{entry.xpath("task").text} | "
-        #logger.info  "notes: #{entry.xpath("notes").text} | "
+
       end #each
       
     rescue Exception => e
@@ -363,8 +351,7 @@ class HarvestEntry < ActiveRecord::Base
       logger.info "HARVEST_DAY_TOTAL_ENTRIES: #{harvest_sync.harvest_day_total_entries}, REDMINE_DAY_TOTAL_ISSUES: #{harvest_sync.redmine_day_total_issues}"
       logger.info "HARVEST_DAY_TOTAL_TIME: #{harvest_sync.harvest_day_total_time.round(2)}, REDMINE_DAY_TOTAL_TIME: #{harvest_sync.redmine_day_total_time}"
 
-      
-      logger.info 
+
       if !total_entries_diff or !total_time_diff or force_validate
         harvest_sync.status = 'problem'
         #TODO: status_info?
@@ -410,10 +397,6 @@ class HarvestEntry < ActiveRecord::Base
         logger.info "GOING TO FETCH ENTRIES!"
         fetch_entries_from_to(redmine_user_id, day_of_the_year, day_of_the_year)
         
-
-        #fetch_entries( redmine_user_id, day_of_the_year, year )
-        #update_rm_id_for_all_entries
-        #set_time_for_all_entries
 
       end #if _diff and whatnot
     
@@ -572,8 +555,7 @@ class HarvestEntry < ActiveRecord::Base
       xml_doc.xpath("//task").each do |task|
         
         harvest_task = HarvestTask.new
-      
-        #TODO: attr_accessor for error strings?
+
         #flash[:notice] = "Harvest entries found: #{xml_doc.xpath("//day_entry").count}"
         
         harvest_task.task_id = task.xpath("id").text
