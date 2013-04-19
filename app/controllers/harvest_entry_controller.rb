@@ -143,7 +143,6 @@ class HarvestEntryController < ApplicationController
           end 
         end
 
-        return 
       else
         if params[:harvest_entry]["rm_smc_validate_force"] == 'on'
           logger.info "------------- VALIDATING ENTRIES USING [[FORCE]] MUHAHA!"
