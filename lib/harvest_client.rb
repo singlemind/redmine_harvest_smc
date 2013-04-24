@@ -3,7 +3,6 @@
 # date: 8-24-2012
 # adapted from example on github: https://github.com/harvesthq/harvest_api_samples/blob/master/harvest_api_sample.rb
 #
-# i.e. subdomain.harvestapp.com
 
 # Your application should send an unique User Agent value out of
 # politeness.

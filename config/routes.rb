@@ -9,7 +9,7 @@
 
 #rails 3.x routes:
 match 'harvest' => 'harvest_entry#index', :as => :harvest
-match 'harvest/:status' => 'harvest_entry#index', :day => /\s/, :via => :get, :as => :harvest_status 
+match 'harvest/:status' => 'harvest_entry#index', :via => :get, :as => :harvest_status 
 match 'harvest_reconcile' => 'harvest_entry#reconcile', :as => :harvest_reconcile
 match 'harvest_user' => 'harvest_entry#harvest_user', :as => :harvest_user
 match 'harvest_settings' => 'harvest_entry#harvest_settings', :as => :harvest_settings

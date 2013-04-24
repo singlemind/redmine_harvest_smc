@@ -1,7 +1,7 @@
 class HarvestEntry < ActiveRecord::Base
   unloadable
   
-  STATUS_STRINGS = [ 'new', 'problem', 'matched', 'unmatched', 'flagged', 'reconciled', 'locked' ]
+  STATUS_STRINGS = [ 'new', 'complete', 'problem', 'matched', 'unmatched', 'flagged', 'reconciled', 'locked' ]
   DESTROYED_STATUS = 'destroyed'
   VALIDATION_STATUS = 'validation'
   SETTINGS_STATUS = 'settings'
@@ -9,9 +9,10 @@ class HarvestEntry < ActiveRecord::Base
   PROBLEM_STATUS = STATUS_STRINGS[1]
   MATCHED_STATUS = STATUS_STRINGS[2] 
   ERROR_INFO_STRINGS = [
-    '4-digit issue found in Harvest Entry notes but did not match Redmine issue.', 
-    'No 4-digit issue found in Harvest Entry notes.',
-    'Could not find a Redmine Time Entry to destroy.'
+    '2-5 digit issue found in Harvest Entry notes but did not match Redmine issue.', 
+    'No 2-5 digit issue found in Harvest Entry notes.',
+    'Could not find a Redmine Time Entry to destroy.', 
+    'Redmine issue is not in an active project.'
   ]
 
   attr_accessor :error_string
@@ -140,16 +141,35 @@ class HarvestEntry < ActiveRecord::Base
     harvest_entries = HarvestEntry.find(:all, :conditions => { :status => status } )
 
     harvest_entries.each do |entry|
-      redmine_issue_id = entry.redmine_issue_id.to_s.match /\d{4}/
-
-      #next unless redmine_issue_id
-      #TODO: set the status of the entry as :unmatched
+      redmine_issue_id = entry.redmine_issue_id.to_s.match /\d{2,5}/
+      
+      issue_with_active_project = false
+      
       if redmine_issue_id
-        user = User.find(entry.redmine_user_id)
         issue = Issue.find(redmine_issue_id.to_s)
+        
+        if issue.project.status == 1
+          issue_with_active_project = true
+        else
+          entry.status = "problem"
+          entry.status_info = ERROR_INFO_STRINGS[3]
+        end
+      end
+
+      if redmine_issue_id and issue_with_active_project
+        
+        user = User.find(entry.redmine_user_id)
+        
         project = issue.project
-        #TODO: reflect what Harvest Has?
-        activity = TimeEntryActivity.find_by_name('Development')
+
+        #reflect what is in Harvest.
+        activity = TimeEntryActivity.find_by_name(entry.task)
+        if activity.nil?
+          activity = TimeEntryActivity.find_by_name('Development')
+          if activity.nil?
+             activity = TimeEntryActivity.first
+           end
+        end
 
         #TODO: export time format as settings string?
         te = TimeEntry.create(:spent_on => Date.strptime(entry.spent_at, '%Y-%m-%d'),
@@ -173,6 +193,7 @@ class HarvestEntry < ActiveRecord::Base
         entry.status = "problem"
         entry.status_info = ERROR_INFO_STRINGS[1]
       end  
+
       entry.save!
       
     end 
@@ -184,7 +205,7 @@ class HarvestEntry < ActiveRecord::Base
 
     entry = HarvestEntry.where(:status => status, :id => entries, :redmine_user_id => userID ).each do |e|
       #TODO: export regex as settings string...
-      redmine_issue_id = e.notes.match /\d{4}/
+      redmine_issue_id = e.notes.match /\d{2,5}/
       if redmine_issue_id
         e.redmine_issue_id = redmine_issue_id[0].to_i
         e.status = 'matched'
@@ -206,7 +227,7 @@ class HarvestEntry < ActiveRecord::Base
   def self.update_rm_id_for_all_entries(userID = nil, status = DEFAULT_STATUS)
     entry = HarvestEntry.where(:status => status, :redmine_user_id => userID ).each do |e|
       #TODO: export regex as settings string...
-      redmine_issue_id = e.notes.match /\d{4}/
+      redmine_issue_id = e.notes.match /\d{2,5}/
       if redmine_issue_id
         e.redmine_issue_id = redmine_issue_id[0].to_i
         e.status = 'matched'
