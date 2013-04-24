@@ -138,7 +138,7 @@ class HarvestEntry < ActiveRecord::Base
     
     #TODO: begin/rescue?
 
-    harvest_entries = HarvestEntry.find(:all, :conditions => { :status => status } )
+    harvest_entries = HarvestEntry.find(:all, :conditions => { :status => [ status, 'problem' ] } )
 
     harvest_entries.each do |entry|
       redmine_issue_id = entry.redmine_issue_id.to_s.match /\d{2,5}/
