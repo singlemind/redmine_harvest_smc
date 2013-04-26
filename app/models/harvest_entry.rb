@@ -6,14 +6,17 @@ class HarvestEntry < ActiveRecord::Base
   VALIDATION_STATUS = 'validation'
   SETTINGS_STATUS = 'settings'
   DEFAULT_STATUS = STATUS_STRINGS[0]
-  PROBLEM_STATUS = STATUS_STRINGS[1]
-  MATCHED_STATUS = STATUS_STRINGS[2] 
+  PROBLEM_STATUS = STATUS_STRINGS[2]
+  MATCHED_STATUS = STATUS_STRINGS[3] 
+  UNMATCHED_STRING = STATUS_STRINGS[4]
   ERROR_INFO_STRINGS = [
     '2-5 digit issue found in Harvest Entry notes but did not match Redmine issue.', 
     'No 2-5 digit issue found in Harvest Entry notes.',
     'Could not find a Redmine Time Entry to destroy.', 
     'Redmine issue is not in an active project.'
   ]
+
+  DEBUG = false 
 
   attr_accessor :error_string
 
@@ -151,7 +154,7 @@ class HarvestEntry < ActiveRecord::Base
         if issue.project.status == 1
           issue_with_active_project = true
         else
-          entry.status = "problem"
+          entry.status = UNMATCHED_STRING
           entry.status_info = ERROR_INFO_STRINGS[3]
         end
       end
@@ -190,7 +193,7 @@ class HarvestEntry < ActiveRecord::Base
         entry.status = "complete"
         entry.redmine_time_entry_id = te.id
       else 
-        entry.status = "problem"
+        entry.status = PROBLEM_STATUS
         entry.status_info = ERROR_INFO_STRINGS[1]
       end  
 
@@ -208,15 +211,15 @@ class HarvestEntry < ActiveRecord::Base
       redmine_issue_id = e.notes.match /\d{2,5}/
       if redmine_issue_id
         e.redmine_issue_id = redmine_issue_id[0].to_i
-        e.status = 'matched'
+        e.status = MATCHED_STATUS
         unless Issue.find_by_id(redmine_issue_id[0].to_i)
-          e.status = 'problem'
+          e.status = UNMATCHED_STRING
           e.status_info = ERROR_INFO_STRINGS[0]
         end
       else 
         #TODO: internal status?
         e.status_info = ERROR_INFO_STRINGS[1]
-        e.status = 'problem'
+        e.status = PROBLEM_STATUS
       end
       e.save!
     end
@@ -230,15 +233,15 @@ class HarvestEntry < ActiveRecord::Base
       redmine_issue_id = e.notes.match /\d{2,5}/
       if redmine_issue_id
         e.redmine_issue_id = redmine_issue_id[0].to_i
-        e.status = 'matched'
+        e.status = MATCHED_STATUS
         unless Issue.find_by_id(redmine_issue_id[0].to_i)
           e.status_info = ERROR_INFO_STRINGS[0]
-          e.status = 'problem'
+          e.status = UNMATCHED_STRING
         end
       else 
         #TODO: internal status?
         e.status_info = ERROR_INFO_STRINGS[1]
-        e.status = 'problem'
+        e.status = PROBLEM_STATUS
       end
       e.save!
     end
@@ -257,65 +260,71 @@ class HarvestEntry < ActiveRecord::Base
       
       harvest_settings.each do |setting|
         
-        unless setting.notes_string.nil?
-          #logger.info "%%%%%%%%%%%%%%%% notes_string not nil!"
+        logger.info "SETTING: #{setting.inspect} and ENTRY: #{e.inspect}"
+
+        unless (setting.notes_string.nil? or setting.notes_string.blank?)
+          logger.info "%%%%%%%%%%%%%%%% notes_string not nil!" if DEBUG
+
           if !setting.notes_string.blank? and e.notes =~ /#{Regexp.escape(setting.notes_string)}/
-            #logger.info "%%%%%%%%%%%%%%%% MATCHED notes_string!"
+            logger.info "%%%%%%%%%%%%%%%% MATCHED notes_string!" if DEBUG
             e.redmine_issue_id = setting.redmine_issue
             e.status = MATCHED_STATUS
             #e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)
             e.save! 
-            next
+            logger.info "^^^^ GOING TO BREAK!" if DEBUG
+            break
           end
           
         end
 
-        unless setting.project.nil?
-          #logger.info "%%%%%%%%%%%%%%%% project not nil!"
-          if setting.task.nil?
-            #logger.info "%%%%%%%%%%%%%%%% task not nil!"
+        unless (setting.project.nil? or setting.project.blank?)
+          logger.info "%%%%%%%%%%%%%%%% project not nil!" if DEBUG
+          if (setting.task.nil? and setting.task.blank?)
+            logger.info "%%%%%%%%%%%%%%%% task is nil! checking match for SETTING.PROJECT: #{setting.project} and ENTRY.PROJECT: #{e.project}" if DEBUG
             #JUST A PROJECT!
-            if !setting.project.blank? and e.project =~ /#{Regexp.escape(setting.project)}/
-              #logger.info "%%%%%%%%%%%%%%%% MATCHED project!"
+            if (!setting.project.blank? and e.project =~ /#{Regexp.escape(setting.project)}/)
+              logger.info "%%%%%%%%%%%%%%%% MATCHED project: #{setting.project}" if DEBUG
               e.redmine_issue_id = setting.redmine_issue
               e.status = MATCHED_STATUS
               #e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)
               e.save!  
-              next
+              logger.info "^^^^ GOING TO BREAK!" if DEBUG
+              break
             end
-            
           else
             #MUST HAVE A TASK, TOO! CHECK BOTH!
-            if !setting.project.blank? and e.project =~ /#{Regexp.escape(setting.project)}/ and !setting.task.blank? and e.task =~ /#{Regexp.escape(setting.task)}/
-              #logger.info "%%%%%%%%%%%%%%%% MATCHED project AND task!!"
+            logger.info "HAVE A TASK, TOO! CHECK BOTH! SETTING.PROJECT: #{setting.project},  SETTING.TASK #{setting.task} and ENTRY.PROJECT: #{e.project} ENTRY.TASK: #{e.task}"
+            if (!setting.project.blank? and e.project =~ /#{Regexp.escape(setting.project)}/ and !setting.task.blank? and e.task =~ /#{Regexp.escape(setting.task)}/)
+              logger.info "%%%%%%%%%%%%%%%% MATCHED project AND task!!" if DEBUG
               e.redmine_issue_id = setting.redmine_issue
               e.status = MATCHED_STATUS
               #e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)  
               e.save!  
-              next
+              logger.info "^^^^ GOING TO BREAK!" if DEBUG
+              break
             end
-            
-          end
-          
-          
-        end
+          end #else
+        end #unless setting.project.nil?
         
         #MUST JUST HAVE A TASK DEFINED...
-        unless setting.task.nil?
-          #logger.info "%%%%%%%%%%%%%%%% task not nil!"
-          if !setting.task.blank? and e.task =~ /#{Regexp.escape(setting.task)}/
-            #logger.info "%%%%%%%%%%%%%%%% MATCHED just task!"
+        unless (setting.task.nil? or setting.task.blank?)
+          logger.info "%%%%%%%%%%%%%%%% task not nil!" if DEBUG
+          #be extra certian that there's no project also defined in this setting...
+          #break unless (setting.project.nil? or setting.project.blank?)
+          if (!setting.task.blank? and e.task =~ /#{Regexp.escape(setting.task)}/)
+            logger.info "%%%%%%%%%%%%%%%% MATCHED just task!" if DEBUG
             e.redmine_issue_id = setting.redmine_issue
             e.status = MATCHED_STATUS
             #e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)  
             e.save!  
-            next
+            logger.info "^^^^ GOING TO BREAK!" if DEBUG
+            break
           end
 
         end
         #TODO: status_info
         #e.status = 'problem' if e.redmine_issue_id.blank?
-        #logger.info "%%%%%%%%%%%% END OF SETTINGS!"
+        logger.info "%%%%%%%%%%%% END OF SETTINGS!" if DEBUG
 
       end
       

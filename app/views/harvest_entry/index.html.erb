@@ -232,7 +232,7 @@
                 <td><%= entry.redmine_name %></td>
                 <td>
                     <% if entry.redmine_issue_id and !entry.status.scan(/matched|complete|locked/).empty? %>
-                    <a href="/issues/<%= entry.redmine_issue_id %>" title="<%= Issue.find_by_id(entry.redmine_issue_id).subject %>" >
+                    <a href="/issues/<%= entry.redmine_issue_id %>" title="<%= Issue.find_by_id(entry.redmine_issue_id).subject rescue ''%>" >
                         <%= entry.redmine_issue_id %>
                     </a>
                     <% else %>
