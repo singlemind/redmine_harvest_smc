@@ -255,7 +255,7 @@ class HarvestEntry < ActiveRecord::Base
     HarvestEntry.update_rm_id_for_all_entries(userID)
 
 
-    entry = HarvestEntry.where(:status => status, :redmine_user_id => userID ).each do |e|
+    entry = HarvestEntry.where(:status => [status, UNMATCHED_STRING], :redmine_user_id => userID ).each do |e|
       
       harvest_settings = HarvestSettings.all
       
