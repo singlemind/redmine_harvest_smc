@@ -117,11 +117,11 @@ class HarvestEntry < ActiveRecord::Base
         harvest_entry.user_id = entry.xpath("user_id").text
         harvest_entry.client = entry.xpath("client").text
         harvest_entry.project_id = entry.xpath("project_id").text
-        harvest_entry.project = entry.xpath("project").text
+        harvest_entry.project = entry.xpath("project").text.gsub("&amp;","&")
         harvest_entry.task_id = entry.xpath("task_id").text
         harvest_entry.task = entry.xpath("task").text
         #HACKY!
-        harvest_entry.notes = entry.xpath("notes").text.gsub("&amp;","&")
+        harvest_entry.notes = entry.xpath("notes").text
         harvest_entry.status = DEFAULT_STATUS
         harvest_entry.redmine_user_id = redmine_user_id
         harvest_entry.redmine_name = redmine_name
@@ -409,10 +409,10 @@ class HarvestEntry < ActiveRecord::Base
           harvest_entry.user_id             = entry.xpath("user_id").text
           harvest_entry.client              = entry.xpath("client").text
           harvest_entry.project_id          = entry.xpath("project_id").text
-          harvest_entry.project             = entry.xpath("project").text
+          harvest_entry.project             = entry.xpath("project").text.gsub("&amp;","&")
           harvest_entry.task_id             = entry.xpath("task_id").text
           harvest_entry.task                = entry.xpath("task").text
-          harvest_entry.notes               = entry.xpath("notes").text.gsub("&amp;","&")
+          harvest_entry.notes               = entry.xpath("notes").text
           harvest_entry.status              = DEFAULT_STATUS
           harvest_entry.redmine_user_id     = redmine_user_id
           harvest_entry.redmine_name        = redmine_name
