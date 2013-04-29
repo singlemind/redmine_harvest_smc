@@ -204,32 +204,41 @@ class HarvestEntry < ActiveRecord::Base
 
   end #end self.set_time_for_each_entry
 
+  # UNUSED!
   # hey look at that, if you toss an [ a, r, r, a, y ] at a col name active record uses a WHERE IN
-  def self.update_rm_id_for_each_entry(entries = [], userID = nil, status = DEFAULT_STATUS )
+  # def self.update_rm_id_for_each_entry(entries = [], userID = nil, status = DEFAULT_STATUS )
 
-    entry = HarvestEntry.where(:status => status, :id => entries, :redmine_user_id => userID ).each do |e|
-      #TODO: export regex as settings string...
-      redmine_issue_id = e.notes.match /\d{2,5}/
-      if redmine_issue_id
-        e.redmine_issue_id = redmine_issue_id[0].to_i
-        e.status = MATCHED_STATUS
-        unless Issue.find_by_id(redmine_issue_id[0].to_i)
-          e.status = UNMATCHED_STRING
-          e.status_info = ERROR_INFO_STRINGS[0]
-        end
-      else 
-        #TODO: internal status?
-        e.status_info = ERROR_INFO_STRINGS[1]
-        e.status = PROBLEM_STATUS
-      end
-      e.save!
-    end
+  #   entry = HarvestEntry.where(:status => status, :id => entries, :redmine_user_id => userID ).each do |e|
+  #     #TODO: make this a setting?
+  #     logger.info "############### IS IT BLANK? #{e.redmine_issue_id.blank?} #{e.redmine_issue_id}"
+  #     break unless e.redmine_issue_id.blank?
+  #     logger.info "############### IS IT BLANK? #{e.redmine_issue_id.blank?} #{e.redmine_issue_id}"
+  #     #TODO: export regex as settings string...
+  #     redmine_issue_id = e.notes.match /\d{2,5}/
+  #     if redmine_issue_id
+  #       e.redmine_issue_id = redmine_issue_id[0].to_i
+  #       e.status = MATCHED_STATUS
+  #       unless Issue.find_by_id(redmine_issue_id[0].to_i)
+  #         e.status = UNMATCHED_STRING
+  #         e.status_info = ERROR_INFO_STRINGS[0]
+  #       end
+  #     else 
+  #       #TODO: internal status?
+  #       e.status_info = ERROR_INFO_STRINGS[1]
+  #       e.status = PROBLEM_STATUS
+  #     end
+  #     e.save!
+  #   end
 
-    return entry
-  end #update_rm_id_for_each_entry
+  #   return entry
+  # end #update_rm_id_for_each_entry
 
   def self.update_rm_id_for_all_entries(userID = nil, status = DEFAULT_STATUS)
     entry = HarvestEntry.where(:status => status, :redmine_user_id => userID ).each do |e|
+      #TODO: make this a setting?
+      logger.info "^^^^^^^^^^^^^^ IS IT BLANK? #{e.redmine_issue_id.blank?} #{e.redmine_issue_id}" if DEBUG
+      next unless e.redmine_issue_id.blank?
+      logger.info "^^^^^^^^^^^^^^ IS IT BLANK? #{e.redmine_issue_id.blank?} #{e.redmine_issue_id}" if DEBUG
       #TODO: export regex as settings string...
       redmine_issue_id = e.notes.match /\d{2,5}/
       if redmine_issue_id
@@ -250,13 +259,10 @@ class HarvestEntry < ActiveRecord::Base
   end #update_rm_id_for_all_entries 
 
   def self.reconcile(userID = nil, status = 'problem')
-    
-    #logger.info "%%%%%%%%%%%%%%% ABOUT TO RECONCILE!"
-    HarvestEntry.update_rm_id_for_all_entries(userID)
 
     harvest_settings = HarvestSettings.all
 
-    entry = HarvestEntry.where(:status => [status, UNMATCHED_STRING], :redmine_user_id => userID ).each do |e|
+    entry = HarvestEntry.where(:status => [status, UNMATCHED_STRING, STATUS_STRINGS[0]], :redmine_user_id => userID ).each do |e|
       
       harvest_settings.each do |setting|
 
@@ -320,6 +326,8 @@ class HarvestEntry < ActiveRecord::Base
         logger.info "%%%%%%%%%%%% END OF SETTINGS!" if DEBUG
       end 
     end
+
+    HarvestEntry.update_rm_id_for_all_entries(userID)
 
     HarvestEntry.set_time_for_all_entries(userID)
 

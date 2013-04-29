@@ -115,14 +115,15 @@ class HarvestEntryController < ApplicationController
 
     #harvest_entries?
       
-    if request.post? and params[:harvest_entries]
-      #logger.info params.inspect
-      params[:status] ||= 'new'
-      HarvestEntry.update_rm_id_for_each_entry(params[:harvest_entries], User.current.id, params[:status])
-      redirect_to :action => "index"
-      return
-      #flash[:notice] = HarvestEntry.where(:status => params[:status], :id => params[:harvest_entries], :redmine_user_id => User.current.id ).count.to_s
-    end
+    # UNUSED!  
+    # if request.post? and params[:harvest_entries]
+    #   #logger.info params.inspect
+    #   params[:status] ||= 'new'
+    #   HarvestEntry.update_rm_id_for_each_entry(params[:harvest_entries], User.current.id, params[:status])
+    #   redirect_to :action => "index"
+    #   return
+    #   #flash[:notice] = HarvestEntry.where(:status => params[:status], :id => params[:harvest_entries], :redmine_user_id => User.current.id ).count.to_s
+    # end
 
     if request.post? and params[:harvest_entry] and params[:harvest_entry][:from] and params[:harvest_entry][:to]
 
