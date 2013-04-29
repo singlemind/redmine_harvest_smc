@@ -244,7 +244,7 @@
                 
                 <td><% if entry.redmine_time_entry_id %>
                   <% te = TimeEntry.find_by_id(entry.redmine_time_entry_id) %>
-                    <a href="/time_entries/<%= entry.redmine_time_entry_id %>/edit/" title="<%= te.activity te.comments %>-- <%= te.comments %>" >
+                    <a href="/time_entries/<%= entry.redmine_time_entry_id %>/edit/" title="<%= te.activity te.comments rescue ''%>-- <%= te.comments rescue ''%>" >
                         <%= entry.hours %>
                     </a>
                     <% else %>
