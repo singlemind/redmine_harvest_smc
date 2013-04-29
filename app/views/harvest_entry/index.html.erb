@@ -221,7 +221,7 @@
                 <% day = Date.strptime(entry.spent_at, '%Y-%m-%d').strftime('%Y/%m/%d') %>
                 <td><a href="https://<%= Setting["plugin_redmine_harvest_smc"]["harvest_subdomain"] %>.harvestapp.com/time/day/<%= day %>" title="Harvest link to <%= day %>" class="entry_link_to_harvest">⃔</a></td>
                 <td>
-                  <% if entry.status == 'problem' %>
+                  <% if entry.status == 'problem' or entry.status == 'unmatched' %>
                     <b class="hightlightedRow" title="<%= entry.status_info %>"><%= entry.status %></b>
                   <% else %>
                     <%= entry.status %>

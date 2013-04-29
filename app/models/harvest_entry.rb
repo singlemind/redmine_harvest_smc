@@ -155,7 +155,7 @@ class HarvestEntry < ActiveRecord::Base
         if issue.project.status == 1
           issue_with_active_project = true
         else
-          entry.status = UNMATCHED_STRING
+          entry.status = PROBLEM_STATUS
           entry.status_info = ERROR_INFO_STRINGS[3]
         end
       end
@@ -244,10 +244,17 @@ class HarvestEntry < ActiveRecord::Base
       if redmine_issue_id
         e.redmine_issue_id = redmine_issue_id[0].to_i
         e.status = MATCHED_STATUS
-        unless Issue.find_by_id(redmine_issue_id[0].to_i)
+
+        if Issue.find_by_id(redmine_issue_id[0].to_i)
+          if Issue.find_by_id(redmine_issue_id[0].to_i).project.status != 1
+            e.status_info = ERROR_INFO_STRINGS[3]
+            e.status = PROBLEM_STATUS
+          end
+        else
           e.status_info = ERROR_INFO_STRINGS[0]
-          e.status = UNMATCHED_STRING
+          e.status = PROBLEM_STATUS
         end
+
       else 
         #TODO: internal status?
         e.status_info = ERROR_INFO_STRINGS[1]
