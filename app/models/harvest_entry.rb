@@ -254,81 +254,71 @@ class HarvestEntry < ActiveRecord::Base
     #logger.info "%%%%%%%%%%%%%%% ABOUT TO RECONCILE!"
     HarvestEntry.update_rm_id_for_all_entries(userID)
 
+    harvest_settings = HarvestSettings.all
 
     entry = HarvestEntry.where(:status => [status, UNMATCHED_STRING], :redmine_user_id => userID ).each do |e|
       
-      harvest_settings = HarvestSettings.all
-      
       harvest_settings.each do |setting|
-        
-        logger.info "SETTING: #{setting.inspect} and ENTRY: #{e.inspect}"
 
-        unless (setting.notes_string.nil? or setting.notes_string.blank?)
-          logger.info "%%%%%%%%%%%%%%%% notes_string not nil!" if DEBUG
-
-          if !setting.notes_string.blank? and e.notes =~ /#{Regexp.escape(setting.notes_string)}/
-            logger.info "%%%%%%%%%%%%%%%% MATCHED notes_string!" if DEBUG
-            e.redmine_issue_id = setting.redmine_issue
-            e.status = MATCHED_STATUS
-            #e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)
-            e.save! 
-            logger.info "^^^^ GOING TO BREAK!" if DEBUG
-            break
-          end
-          
-        end
-
-        unless (setting.project.nil? or setting.project.blank?)
-          logger.info "%%%%%%%%%%%%%%%% project not nil!" if DEBUG
-          if (setting.task.nil? and setting.task.blank?)
-            logger.info "%%%%%%%%%%%%%%%% task is nil! checking match for SETTING.PROJECT: #{setting.project} and ENTRY.PROJECT: #{e.project}" if DEBUG
-            #JUST A PROJECT!
-            if (!setting.project.blank? and e.project =~ /#{Regexp.escape(setting.project)}/)
-              logger.info "%%%%%%%%%%%%%%%% MATCHED project: #{setting.project}" if DEBUG
+        case setting.for_fields
+          when /project task notes_string/
+            if (e.project =~ /#{Regexp.escape(setting.project)}/ and 
+              e.task =~ /#{Regexp.escape(setting.task)}/ and 
+              e.notes =~ /#{Regexp.escape(setting.notes_string)}/ )
+              logger.info "%%%%%%%%%%%%%%%% MATCHED project AND task AND notes_string!" if DEBUG
               e.redmine_issue_id = setting.redmine_issue
               e.status = MATCHED_STATUS
-              #e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)
               e.save!  
-              logger.info "^^^^ GOING TO BREAK!" if DEBUG
-              break
             end
-          else
-            #MUST HAVE A TASK, TOO! CHECK BOTH!
-            logger.info "HAVE A TASK, TOO! CHECK BOTH! SETTING.PROJECT: #{setting.project},  SETTING.TASK #{setting.task} and ENTRY.PROJECT: #{e.project} ENTRY.TASK: #{e.task}"
-            if (!setting.project.blank? and e.project =~ /#{Regexp.escape(setting.project)}/ and !setting.task.blank? and e.task =~ /#{Regexp.escape(setting.task)}/)
-              logger.info "%%%%%%%%%%%%%%%% MATCHED project AND task!!" if DEBUG
+          when /project notes_string/
+            if (e.project =~ /#{Regexp.escape(setting.project)}/ and
+              e.notes =~ /#{Regexp.escape(setting.notes_string)}/)
+              logger.info "%%%%%%%%%%%%%%%% MATCHED project AND notes_string!" if DEBUG
               e.redmine_issue_id = setting.redmine_issue
               e.status = MATCHED_STATUS
-              #e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)  
               e.save!  
-              logger.info "^^^^ GOING TO BREAK!" if DEBUG
-              break
             end
-          end #else
-        end #unless setting.project.nil?
-        
-        #MUST JUST HAVE A TASK DEFINED...
-        unless (setting.task.nil? or setting.task.blank?)
-          logger.info "%%%%%%%%%%%%%%%% task not nil!" if DEBUG
-          #be extra certian that there's no project also defined in this setting...
-          #break unless (setting.project.nil? or setting.project.blank?)
-          if (!setting.task.blank? and e.task =~ /#{Regexp.escape(setting.task)}/)
-            logger.info "%%%%%%%%%%%%%%%% MATCHED just task!" if DEBUG
-            e.redmine_issue_id = setting.redmine_issue
-            e.status = MATCHED_STATUS
-            #e.status = PROBLEM_STATUS unless Issue.find_by_id(setting.redmine_issue)  
-            e.save!  
-            logger.info "^^^^ GOING TO BREAK!" if DEBUG
-            break
-          end
+          when /task notes_string/
+            if (e.task =~ /#{Regexp.escape(setting.task)}/ and 
+              e.notes =~ /#{Regexp.escape(setting.notes_string)}/)
+              logger.info "%%%%%%%%%%%%%%%% MATCHED task AND notes_string!" if DEBUG
+              e.redmine_issue_id = setting.redmine_issue
+              e.status = MATCHED_STATUS
+              e.save!  
+            end
+          when /project task/
+            if (e.project =~ /#{Regexp.escape(setting.project)}/ and 
+              e.task =~ /#{Regexp.escape(setting.task)}/)
+              logger.info "%%%%%%%%%%%%%%%% MATCHED project AND task!" if DEBUG
+              e.redmine_issue_id = setting.redmine_issue
+              e.status = MATCHED_STATUS
+              e.save!  
+            end
+          when /project/
+            if e.project =~ /#{Regexp.escape(setting.project)}/
+              logger.info "%%%%%%%%%%%%%%%% MATCHED project!" if DEBUG
+              e.redmine_issue_id = setting.redmine_issue
+              e.status = MATCHED_STATUS
+              e.save!  
+            end
+          when /task/
+            if e.task =~ /#{Regexp.escape(setting.task)}/
+              logger.info "%%%%%%%%%%%%%%%% MATCHED just task!" if DEBUG
+              e.redmine_issue_id = setting.redmine_issue
+              e.status = MATCHED_STATUS
+              e.save!  
+            end
+          when /notes_string/
+            if e.notes =~ /#{Regexp.escape(setting.notes_string)}/
+              logger.info "%%%%%%%%%%%%%%%% MATCHED notes_string setting!" if DEBUG
+              e.redmine_issue_id = setting.redmine_issue
+              e.status = MATCHED_STATUS
+              e.save! 
+            end
+        end #case         
 
-        end
-        #TODO: status_info
-        #e.status = 'problem' if e.redmine_issue_id.blank?
         logger.info "%%%%%%%%%%%% END OF SETTINGS!" if DEBUG
-
-      end
-      
+      end 
     end
 
     HarvestEntry.set_time_for_all_entries(userID)

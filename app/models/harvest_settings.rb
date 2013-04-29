@@ -4,6 +4,7 @@ class HarvestSettings < ActiveRecord::Base
   before_save :set_updated_at
   before_create :set_created_at
   before_create :set_default_status
+  before_create :set_for_fields
 
   validates :redmine_issue, :numericality => { :only_integer => true, :greater_than => 0 }
   validate :any_present?
@@ -36,7 +37,11 @@ class HarvestSettings < ActiveRecord::Base
   end
 
   def set_default_status 
-    self.status = 'created'
+    self.status = 'new'
+  end
+
+  def set_for_fields
+    self.for_fields = "#{ self.project.blank? ? "" : "project " }#{ self.task.blank? ? "" : "task " }#{ self.notes_string.blank? ? "" : "notes_string" }"
   end
 
 end
