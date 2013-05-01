@@ -33,11 +33,17 @@ As well as some other useful controls for changing how the table looks.
 
 Redmine 2.x 
 
-gem install ezcrypto --no-ri --no-rdoc
-sudo apt-get install libxslt1-dev
-gem install nokogiri --no-ri --no-rdoc 
+	sudo apt-get install libxslt1-dev
 
----
+	cd /path/to/redmine/plugins/redmine_harvest_smc/
+	bundle install 
+
+or install gems manually: 
+
+	gem install ezcrypto --no-ri --no-rdoc
+	gem install on_the_spot --no-ri --no-rdoc
+	gem install nokogiri --no-ri --no-rdoc 
+
 
 [redmine.org/projects/redmine/wiki/Plugins](http://www.redmine.org/projects/redmine/wiki/Plugins
  "redmine.org")
