@@ -4,6 +4,8 @@ This is a Redmine plugin used to sync time entries made in Harvest with issues i
 
 Here’s a quick tutorial: 
 
+Verify the plugin is installed by visiting the plugins section of your Redmine instance. Click on the "settings" link for the redmine_harvest_smc plugin and enter the URL prefix of your Harvest account. 
+
 Once you log in you’ll notice a couple extra links in the header of Redmine-- go ahead a click the “Harvest User” link and enter your Harvest login credentials. 
 
 ![Gm9nF9b.png](http://i.imgur.com/Gm9nF9b.png)
