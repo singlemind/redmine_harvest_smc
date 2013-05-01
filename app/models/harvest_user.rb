@@ -27,6 +27,7 @@ class HarvestUser < ActiveRecord::Base
     unless decrypt_test.nil?  
       return string
     else 
+      #TODO: externalize these srings to a yml config file
       password = "ohso4Xoo"
       salt = "4EFAB921EEDABB547F6B1982C6E9E74AC4DF2AE10D5015FE0C16FFD0380E2E61"
       return EzCrypto::Key.encrypt_with_password password, salt, string
@@ -41,6 +42,7 @@ class HarvestUser < ActiveRecord::Base
   end
   
   def decrypt (string)
+    #TODO: externalize these srings to a yml config file
     password = "ohso4Xoo"
     salt = "4EFAB921EEDABB547F6B1982C6E9E74AC4DF2AE10D5015FE0C16FFD0380E2E61"
     return EzCrypto::Key.decrypt_with_password password, salt, string
